@@ -1,3 +1,4 @@
 tools
 .git
 *.md
+deploy.sh
