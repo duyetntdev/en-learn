@@ -1,0 +1,7 @@
+services:
+  en-learn:
+    build: .
+    container_name: en-learn
+    ports:
+      - "8080:80"
+    restart: unless-stopped
