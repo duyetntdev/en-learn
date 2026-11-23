@@ -29,8 +29,9 @@ AUDIO_V=$(grep -oE 'AUDIO_V *= *[0-9]+' js/app.js | grep -oE '[0-9]+$')
 NEW_STATE=$( { echo "V=$AUDIO_V"; sha1sum audio/*.mp3; } )
 if [ -f "$STATE" ] && head -1 "$STATE" | grep -q '^V='; then
   OLD_V=$(head -1 "$STATE" | cut -d= -f2)
+  # Dùng if (không dùng &&) để vòng lặp luôn trả về 0, nếu không set -e + pipefail sẽ dừng script
   CHANGED=$(tail -n +2 "$STATE" | while read -r h f; do
-              [ -f "$f" ] && [ "$(sha1sum "$f" | cut -d' ' -f1)" != "$h" ] && echo "$f"; done | wc -l)
+              if [ -f "$f" ] && [ "$(sha1sum "$f" | cut -d' ' -f1)" != "$h" ]; then echo "$f"; fi; done | wc -l)
   if [ "$CHANGED" -gt 0 ] && [ "$AUDIO_V" = "$OLD_V" ]; then
     echo "⚠️  $CHANGED file mp3 đã thay đổi nhưng AUDIO_V trong js/app.js vẫn là $AUDIO_V."
     read -r -p "   Vẫn deploy (máy đã cache có thể nghe file cũ)? [y/N] " ok; [[ "$ok" =~ ^[Yy]$ ]] || exit 1
