@@ -1,7 +1,9 @@
 # Bé Vui Học Tiếng Anh (en-learn)
 
 Website học tiếng Anh cho trẻ em: từ vựng có hình, hội thoại, ngữ pháp, luyện tập và bài kiểm tra.
-Bé phải qua bài kiểm tra (đúng ≥ 8/10 câu) mới mở được bài tiếp theo.
+Bé phải qua bài kiểm tra (đúng ≥ 12/15 câu) mới mở được bài tiếp theo.
+Qua Cấp 1 của một bài sẽ mở thêm **Cấp 2** cùng chủ đề với nội dung mới. Mỗi lần làm lại bài kiểm tra,
+ứng dụng ưu tiên những câu bé chưa gặp (ghi nhớ trong trình duyệt).
 
 Đây là **website tĩnh**: chỉ gồm HTML/CSS/JS và file mp3, không cần database hay backend.
 Tiến độ học được lưu trong trình duyệt của bé (localStorage).
@@ -12,9 +14,11 @@ Tiến độ học được lưu trong trình duyệt của bé (localStorage).
 en-learn/
 ├── index.html            Trang chính
 ├── css/style.css         Giao diện
-├── js/lessons.js         ⭐ NỘI DUNG BÀI HỌC – sửa/thêm bài ở đây
+├── js/lessons.js         ⭐ NỘI DUNG BÀI HỌC (Cấp 1) – sửa/thêm bài ở đây
+├── js/lessons2.js        ⭐ Cấp 2 của từng bài (mở khi qua Cấp 1)
 ├── js/app.js             Logic: khoá/mở bài, luyện tập, kiểm tra, phát âm
-├── audio/*.mp3           129 file phát âm (tên file = câu viết thường, nối bằng dấu -)
+├── js/fx.js              Hiệu ứng vui: pháo hoa, chùm sao, chuỗi câu đúng
+├── audio/*.mp3           684 file phát âm (tên file = câu viết thường, nối bằng dấu -)
 ├── images/               Ảnh minh hoạ (tuỳ chọn, mặc định dùng emoji)
 ├── tools/                Công cụ tạo file âm thanh (không deploy)
 ├── Dockerfile, nginx.conf, docker-compose.yml
@@ -90,5 +94,5 @@ trong `tools/list-texts.js`.
 ## Thay đổi cài đặt
 
 Trong `js/app.js`:
-- `PASS = 8` – số câu cần đúng để qua bài
-- `TEST_N = 10` – số câu trong bài kiểm tra
+- `PASS = 12` – số câu cần đúng để qua bài
+- `TEST_N = 15` – số câu trong bài kiểm tra

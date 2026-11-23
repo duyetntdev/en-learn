@@ -23,13 +23,16 @@ fi
 
 # Nhắc tăng AUDIO_V nếu file mp3 đã thay đổi so với lần deploy trước
 # (trình duyệt cache mp3 30 ngày, không tăng AUDIO_V thì bé vẫn nghe bản cũ)
+# Chỉ tính file đã deploy lần trước mà nay bị đổi nội dung; file mới thêm thì không sao.
 STATE=.deploy-state
-AUDIO_HASH=$(cat audio/*.mp3 | sha1sum | cut -d' ' -f1)
 AUDIO_V=$(grep -oE 'AUDIO_V *= *[0-9]+' js/app.js | grep -oE '[0-9]+$')
-if [ -f "$STATE" ]; then
-  read -r OLD_HASH OLD_V < "$STATE"
-  if [ "$AUDIO_HASH" != "$OLD_HASH" ] && [ "$AUDIO_V" = "$OLD_V" ]; then
-    echo "⚠️  File mp3 đã thay đổi nhưng AUDIO_V trong js/app.js vẫn là $AUDIO_V."
+NEW_STATE=$( { echo "V=$AUDIO_V"; sha1sum audio/*.mp3; } )
+if [ -f "$STATE" ] && head -1 "$STATE" | grep -q '^V='; then
+  OLD_V=$(head -1 "$STATE" | cut -d= -f2)
+  CHANGED=$(tail -n +2 "$STATE" | while read -r h f; do
+              [ -f "$f" ] && [ "$(sha1sum "$f" | cut -d' ' -f1)" != "$h" ] && echo "$f"; done | wc -l)
+  if [ "$CHANGED" -gt 0 ] && [ "$AUDIO_V" = "$OLD_V" ]; then
+    echo "⚠️  $CHANGED file mp3 đã thay đổi nhưng AUDIO_V trong js/app.js vẫn là $AUDIO_V."
     read -r -p "   Vẫn deploy (máy đã cache có thể nghe file cũ)? [y/N] " ok; [[ "$ok" =~ ^[Yy]$ ]] || exit 1
   fi
 fi
@@ -56,5 +59,5 @@ for p in / /js/app.js /js/lessons.js; do
   echo "   $p → $code"
   [ "$code" = 200 ] || { echo "❌ Deploy xong nhưng $p trả về $code"; exit 1; }
 done
-echo "$AUDIO_HASH $AUDIO_V" > "$STATE"
+echo "$NEW_STATE" > "$STATE"
 echo "✅ Đã deploy: https://$DOMAIN"

@@ -138,6 +138,29 @@ button:focus-visible{outline:3px solid var(--c);outline-offset:3px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:16px;font-weight:800;z-index:60;box-shadow:var(--shadow)}
 .confetti{position:fixed;top:-20px;width:12px;height:16px;z-index:70;pointer-events:none;animation:fall linear forwards}
 @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+/* Cấp độ */
+.lvrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.lvtag{font-size:12px;font-weight:800;padding:3px 8px;border-radius:99px;background:color-mix(in srgb,var(--c) 14%,white);color:var(--ink);white-space:nowrap}
+.lvtag.new{background:#FFF4CC}
+.lvsw{display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap}
+.lvbtn{padding:8px 16px;border-radius:99px;background:var(--card);border:3px solid color-mix(in srgb,var(--c) 30%,white);font-weight:800;font-size:15px}
+.lvbtn.on{background:color-mix(in srgb,var(--c) 18%,white);border-color:var(--c)}
+.lvbtn.locked{opacity:.55}
+.lvbtn.shake{animation:shake .4s}
+/* Hiệu ứng vui */
+.fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:80}
+.float-up{position:fixed;transform:translate(-50%,-50%);font-family:'Baloo 2';font-size:30px;font-weight:800;color:var(--ok);text-shadow:0 2px 0 #fff,0 0 12px #fff;pointer-events:none;z-index:81;white-space:nowrap;animation:floatup 1.1s ease-out forwards}
+@keyframes floatup{0%{opacity:0;transform:translate(-50%,-20%) scale(.6)}20%{opacity:1;transform:translate(-50%,-70%) scale(1.2)}100%{opacity:0;transform:translate(-50%,-220%) scale(1)}}
+.fx-banner{position:fixed;left:50%;top:32%;transform:translate(-50%,-50%);font-family:'Baloo 2';font-size:clamp(26px,6vw,42px);font-weight:800;color:#fff;background:linear-gradient(135deg,#FF8A5B,#E8559A 50%,#8E62F0);padding:12px 28px;border-radius:24px;box-shadow:0 8px 0 rgba(43,42,76,.15),0 16px 36px rgba(43,42,76,.25);z-index:82;pointer-events:none;text-align:center;max-width:calc(100vw - 32px);animation:bannerin 1.8s ease-out forwards}
+@keyframes bannerin{0%{opacity:0;transform:translate(-50%,-50%) scale(.4) rotate(-6deg)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.12) rotate(2deg)}25%{transform:translate(-50%,-50%) scale(1) rotate(0)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%) scale(1)}}
+.opt.yay{animation:yay .5s}
+@keyframes yay{35%{transform:scale(1.1) rotate(-2deg)}65%{transform:scale(.97) rotate(1deg)}}
+.qprompt.cheer{animation:cheer .55s}
+@keyframes cheer{30%{transform:translateY(-8px) scale(1.04)}60%{transform:translateY(2px)}}
+#qs.bump{display:inline-block;animation:pop .4s}
+.float-oops{position:fixed;transform:translate(-50%,-50%);font-family:'Baloo 2';font-size:34px;font-weight:800;color:var(--bad);text-shadow:0 2px 0 #fff,0 0 14px #fff;pointer-events:none;z-index:81;white-space:nowrap;animation:oopsup 1.3s ease-out forwards}
+@keyframes oopsup{0%{opacity:0;transform:translate(-50%,-60%) scale(.5)}15%{opacity:1;transform:translate(-50%,-90%) scale(1.2) rotate(-8deg)}30%{transform:translate(-50%,-100%) scale(1) rotate(8deg)}45%{transform:translate(-50%,-105%) rotate(-6deg)}60%{transform:translate(-50%,-110%) rotate(4deg)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-130%) rotate(0)}}
+.panel.oops{animation:shake .4s}
 @media (max-width:560px){
   .logo h1{font-size:28px}.panel{padding:16px}.lhead h2{font-size:26px}
   .qprompt .big{font-size:80px}.qprompt .sent{font-size:24px}.line{max-width:95%}
