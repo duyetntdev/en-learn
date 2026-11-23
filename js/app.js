@@ -5,17 +5,17 @@ const KEY='beVuiHocTiengAnh.v1';
 let progress = {};   // {lessonIndex: stars}
 try{ progress = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ progress = {}; }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(progress)); }catch(e){} }
-/* Cấp độ: Cấp 1 là bài trong lessons.js, Cấp 2 lấy từ LEVEL2 (lessons2.js).
-   Tiến độ lưu theo khoá "i" (Cấp 1, giữ tương thích bản cũ) và "i-2" (Cấp 2). */
-const LV2 = typeof LEVEL2!=='undefined' ? LEVEL2 : {};
-const nLevels = i => LV2[LESSONS[i].title] ? 2 : 1;
-const lv = (i,n) => n===1 ? LESSONS[i] : Object.assign({}, LESSONS[i], LV2[LESSONS[i].title]);
+/* Cấp độ: Cấp 1 là bài trong lessons.js, Cấp 2 lấy từ LEVEL2 (lessons2.js), Cấp 3 từ LEVEL3 (lessons3.js).
+   Qua cấp trước mới mở cấp sau. Tiến độ lưu theo khoá "i" (Cấp 1, giữ tương thích bản cũ), "i-2", "i-3". */
+const EXTRA = [typeof LEVEL2!=='undefined'?LEVEL2:{}, typeof LEVEL3!=='undefined'?LEVEL3:{}];   // Cấp 2, Cấp 3, ...
+const nLevels = i => { let n=1; while(EXTRA[n-1] && EXTRA[n-1][LESSONS[i].title]) n++; return n; };
+const lv = (i,n) => n===1 ? LESSONS[i] : Object.assign({}, LESSONS[i], EXTRA[n-2][LESSONS[i].title]);
 const pk = (i,n) => n===1 ? String(i) : i+'-'+n;
 const starsOf = (i,n) => progress[pk(i,n)]||0;
 const passed = (i,n=1) => starsOf(i,n) > 0;
 const unlocked = i => i===0 || passed(i-1);
 const lvUnlocked = (i,n) => n===1 ? unlocked(i) : passed(i,n-1);
-// Mở bài: vào cấp cao nhất đã mở (đã qua Cấp 1 thì vào thẳng Cấp 2 – nội dung mới)
+// Mở bài: vào cấp cao nhất đã mở (qua Cấp 1 thì vào thẳng Cấp 2, qua Cấp 2 thì vào Cấp 3 – nội dung mới)
 const startLevel = i => { let n=1; while(n<nLevels(i) && passed(i,n)) n++; return n; };
 
 /* Ghi nhớ câu hỏi đã gặp trong bài kiểm tra để lần sau ưu tiên câu mới */
@@ -35,6 +35,7 @@ const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.f
 const norm = s => s.toLowerCase().replace(/[^a-z' ]/g,'').replace(/\s+/g,' ').trim();
 const pic = w => w[3] ? `<img src="${esc(w[3])}" alt="${esc(w[0])}">` : w[2];
 const stars = n => '⭐'.repeat(n) + '☆'.repeat(3-n);
+const pickOne = a => a[Math.floor(Math.random()*a.length)];
 
 let voice = null;
 function pickVoice(){
@@ -100,17 +101,47 @@ function tone(ok){
     });
   }catch(e){}
 }
-function fanfare(){
+function ac(){ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); return actx; }
+// Phát một chuỗi nốt: [tần số, bắt đầu (giây), độ dài]
+function notes(seq, type='triangle', vol=0.18){
   try{
-    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
-    if(actx.state==='suspended') actx.resume();
-    [523,659,784,1047,784,1047].forEach((f,k)=>{
-      const o=actx.createOscillator(), g=actx.createGain();
-      o.type='triangle'; o.frequency.value=f; o.connect(g); g.connect(actx.destination);
-      const t=actx.currentTime+k*0.09;
-      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.18,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
-      o.start(t); o.stop(t+0.25);
+    const A=ac();
+    seq.forEach(([f,at,len=0.22])=>{
+      const o=A.createOscillator(), g=A.createGain(), t=A.currentTime+at;
+      o.type=type; o.frequency.value=f; o.connect(g); g.connect(A.destination);
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+len);
+      o.start(t); o.stop(t+len+0.03);
     });
+  }catch(e){}
+}
+const TUNES=[
+  [[523,0],[659,.09],[784,.18],[1047,.27],[784,.36],[1047,.45,.4]],                       // ta-ta-ta-taaa
+  [[392,0],[523,.12],[659,.24],[784,.36,.15],[659,.5,.12],[784,.62,.5]],                   // kèn chiến thắng
+  [[784,0,.12],[988,.1,.12],[1175,.2,.12],[1568,.3,.5],[1175,.3,.5],[988,.3,.5]],          // hợp âm lấp lánh
+  [[659,0,.15],[659,.15,.15],[784,.3,.15],[880,.45,.15],[1047,.6,.15],[1319,.75,.45]],     // leo thang
+  [[523,0,.1],[587,.08,.1],[659,.16,.1],[698,.24,.1],[784,.32,.1],[880,.4,.1],[988,.48,.1],[1047,.56,.5]], // chạy gam
+];
+let lastTune=-1;
+function fanfare(){
+  let k; do{ k=Math.floor(Math.random()*TUNES.length); }while(k===lastTune && TUNES.length>1);
+  lastTune=k; notes(TUNES[k]);
+}
+// Âm thanh cho từng kiểu hiệu ứng
+function sfx(type){
+  try{
+    const A=ac(), t=A.currentTime;
+    if(type==='boom') return boom();
+    if(type==='sparkle') return notes(Array.from({length:7},(_,k)=>[1200+Math.random()*1400,k*0.06,0.15]),'sine',0.08);
+    if(type==='pop') return notes(Array.from({length:4},(_,k)=>[500+Math.random()*400,k*0.13,0.07]),'square',0.05);
+    if(type==='magic'){ const o=A.createOscillator(), g=A.createGain();
+      o.type='sine'; o.frequency.setValueAtTime(500,t); o.frequency.exponentialRampToValueAtTime(1800,t+0.7);
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.1,t+0.05); g.gain.exponentialRampToValueAtTime(0.0001,t+0.8);
+      o.connect(g); g.connect(A.destination); o.start(t); o.stop(t+0.85); return; }
+    if(type==='whoosh'){ const len=A.sampleRate*0.9, buf=A.createBuffer(1,len,A.sampleRate), d=buf.getChannelData(0);
+      for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.sin(Math.PI*i/len);
+      const src=A.createBufferSource(), f=A.createBiquadFilter(), g=A.createGain();
+      src.buffer=buf; f.type='bandpass'; f.Q.value=2; f.frequency.setValueAtTime(300,t); f.frequency.exponentialRampToValueAtTime(3000,t+0.9);
+      g.gain.value=0.15; src.connect(f); f.connect(g); g.connect(A.destination); src.start(); }
   }catch(e){}
 }
 function wahwah(){
@@ -144,6 +175,7 @@ function boom(){
   }catch(e){}
 }
 FX.onBoom = boom;
+FX.onSound = sfx;
 function cheer(el, big){
   const r = el ? el.getBoundingClientRect() : {left:innerWidth/2,top:innerHeight/2,width:0,height:0};
   const x=r.left+r.width/2, y=r.top+r.height/2;
@@ -159,15 +191,11 @@ function toast(msg){
   const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t);
   setTimeout(()=>t.remove(),2200);
 }
-function confetti(){
-  const cols=['#FF8A5B','#FFC94A','#2FB36B','#4F86F7','#E8559A','#8E62F0'];
-  for(let i=0;i<90;i++){
-    const c=document.createElement('div'); c.className='confetti';
-    c.style.left=Math.random()*100+'vw'; c.style.background=cols[i%cols.length];
-    c.style.animationDuration=(2+Math.random()*2)+'s'; c.style.animationDelay=Math.random()*.5+'s';
-    c.style.borderRadius = Math.random()>.5?'50%':'3px';
-    document.body.appendChild(c); setTimeout(()=>c.remove(),4600);
-  }
+// Ăn mừng qua bài: càng nhiều sao, cấp càng cao thì càng nhiều hiệu ứng; mỗi lần một kiểu khác
+const isEmoji = e => /\p{Extended_Pictographic}/u.test(e);
+function celebrate(L, power){
+  fanfare();
+  return FX.celebrate({ power, emojis:[L.icon, ...L.words.map(w=>w[2])].filter(isEmoji) });
 }
 document.addEventListener('click',e=>{
   const s=e.target.closest('[data-say]'); if(s) speak(s.dataset.say);
@@ -178,27 +206,32 @@ function home(){
   document.documentElement.style.setProperty('--c','#FF8A5B');
   const done = LESSONS.filter((_,i)=>passed(i)).length;
   const cur = LESSONS.findIndex((_,i)=>!passed(i));
-  const done2 = LESSONS.filter((_,i)=>nLevels(i)>1 && passed(i,2)).length;
+  // Cấp nâng cao (từ Cấp 2 trở lên) đã qua / tổng số
+  const advTotal = LESSONS.reduce((a,_,i)=>a+nLevels(i)-1,0);
+  const advDone = LESSONS.reduce((a,_,i)=>{ let c=0; for(let m=2;m<=nLevels(i);m++) if(passed(i,m)) c++; return a+c; },0);
   $('#app').innerHTML = `
   <div class="top">
     <div class="logo"><div class="owl">🦉</div><div><h1>Bé Vui Học <span>Tiếng Anh</span></h1><p>Học mỗi ngày một chút — vui ơi là vui!</p></div></div>
-    <div class="prog"><b>🏅 ${done}/${LESSONS.length} bài đã qua${done2?` · 🆕 ${done2} Cấp 2`:''}</b><div class="bar"><i style="width:${done/LESSONS.length*100}%"></i></div></div>
+    <div class="prog"><b>🏅 ${done}/${LESSONS.length} bài đã qua${advDone?` · 🌟 ${advDone}/${advTotal} cấp nâng cao`:''}</b><div class="bar"><i style="width:${done/LESSONS.length*100}%"></i></div></div>
   </div>
   <div class="hello"><div style="font-size:40px">🦉</div><div class="bubble">${
-    done===LESSONS.length ? (LESSONS.every((_,i)=>passed(i,nLevels(i))) ? 'Tuyệt vời! Con đã qua cả 2 cấp của mọi bài! 🎓 Làm lại để gặp câu hỏi mới nhé.' : 'Tuyệt vời! Con đã qua tất cả bài Cấp 1! 🎓 Bấm vào một bài để học <b>Cấp 2</b> với nội dung mới nhé.')
+    done===LESSONS.length ? (LESSONS.every((_,i)=>passed(i,nLevels(i))) ? 'Tuyệt vời! Con đã qua tất cả các cấp của mọi bài! 🎓👑 Làm lại để gặp câu hỏi mới nhé.' : 'Tuyệt vời! Con đã qua tất cả bài Cấp 1! 🎓 Bấm vào một bài để học <b>cấp tiếp theo</b> với nội dung mới nhé.')
     : done===0 ? 'Xin chào! Mình là cú Ollie. Bắt đầu với <b>Bài 1</b> nhé! Làm đúng bài kiểm tra để mở khoá bài tiếp theo 🔓'
     : `Giỏi quá! Tiếp tục với <b>Bài ${cur+1}: ${LESSONS[cur].title}</b> nào!`}</div></div>
   <div class="grid">${LESSONS.map((L,i)=>{
-    const lock=!unlocked(i), st=starsOf(i,1), N=nLevels(i), st2=N>1?starsOf(i,2):0;
+    const lock=!unlocked(i), st=starsOf(i,1), N=nLevels(i), nx=startLevel(i);
     const state = lock ? 'Qua bài '+i+' để mở khoá'
       : !st ? '▶ Bắt đầu học'
-      : N>1 && !st2 ? '🆕 Cấp 2 đã mở — học tiếp'
-      : '✅ Đã qua — làm lại với câu hỏi mới';
+      : !passed(i,nx) ? `🆕 Cấp ${nx} đã mở — học tiếp`
+      : '✅ Đã qua mọi cấp — làm lại với câu hỏi mới';
+    const lvTags = Array.from({length:N},(_,k)=>k+1).map(m=>{
+      const s2=starsOf(i,m), open=lvUnlocked(i,m);
+      return `<span class="lvtag ${!s2&&open?'new':''} ${open?'':'off'}">Cấp ${m} ${s2?stars(s2):open?'🆕':'🔒'}</span>`; }).join('');
     return `<button class="lcard ${lock?'locked':''} ${i===cur?'current':''}" style="--c:${L.color}" data-open="${i}" aria-label="Bài ${i+1} ${L.title}${lock?' (đang khoá)':''}">
       ${lock?'<span class="lock">🔒</span>':st?`<span class="stars">${stars(st)}</span>`:''}
       <div class="ic">${L.icon}</div>
       <div class="num">Bài ${i+1}</div><h3>${L.title}</h3><div class="vi">${L.vi}</div>
-      ${N>1&&st?`<div class="lvrow"><span class="lvtag">Cấp 1 ${stars(st)}</span><span class="lvtag ${st2?'':'new'}">Cấp 2 ${st2?stars(st2):'🆕'}</span></div>`:''}
+      ${N>1&&st?`<div class="lvrow">${lvTags}</div>`:''}
       <div class="state">${state}</div>
     </button>`;}).join('')}</div>
   <div class="foot"><span>Tiến độ được lưu trên trình duyệt này. Bật loa để nghe phát âm 🔊</span><button class="link" id="reset">Xoá tiến độ</button></div>`;
@@ -283,12 +316,12 @@ function lesson(i,tab,n=1){
       <div class="sc">Đúng ${sc}/${q} câu</div><p class="hint">${sc>=q-1?'Con đã sẵn sàng làm bài kiểm tra!':'Luyện thêm một lượt nữa cho chắc nhé.'}</p>
       <div class="row"><button class="btn ghost" id="again">🔁 Luyện tiếp</button><button class="btn" id="totest">🏆 Làm bài kiểm tra</button></div></div>`;
       $('#again').onclick=start; $('#totest').onclick=()=>lesson(i,'test',n);
-      if(sc>=q-1){ FX.show(1800); fanfare(); }
+      if(sc>=q-1) celebrate(L, 1);
     });
     start();
   }
   if(tab==='test'){
-    const unlockMsg = n===1 ? (N>1?'🔓 Qua bài để mở bài tiếp theo và Cấp 2':'🔓 Qua bài để mở bài tiếp theo') : '🌟 Thử thách Cấp '+n;
+    const unlockMsg = n===1 ? (N>1?'🔓 Qua bài để mở bài tiếp theo và Cấp 2':'🔓 Qua bài để mở bài tiếp theo') : n<N ? `🔓 Qua bài để mở Cấp ${n+1}` : '👑 Thử thách cấp cao nhất';
     P.innerHTML=`<div class="testintro"><div class="big">🏆</div><h3>Bài kiểm tra Bài ${i+1}${N>1?' · Cấp '+n:''}</h3>
       <p class="hint">Gồm từ vựng, nghe, ngữ pháp, sắp xếp câu và hội thoại.</p>
       <div><span class="pill">📝 ${TEST_N} câu</span><span class="pill">✅ Cần đúng ${PASS} câu</span><span class="pill">${unlockMsg}</span></div>
@@ -422,14 +455,15 @@ function runQuiz(P, qs, onDone, label){
 function testResult(i,lvl,sc,n){
   const P=$('#panel'), ok=sc>=PASS, st= sc>=n?3: sc>=n-2?2: ok?1:0;
   const first=!passed(i,lvl), key=pk(i,lvl), N=nLevels(i), hasNext=lvl<N;
-  if(ok){ progress[key]=Math.max(progress[key]||0,st); save(); confetti(); fanfare(); FX.show(st===3?5000:3000); }
+  if(ok){ progress[key]=Math.max(progress[key]||0,st); save(); celebrate(lv(i,lvl), st+lvl-1); }   // sức mạnh 1–5
   const last=i===LESSONS.length-1;
   const unlockMsg = !first ? 'Làm tốt lắm! Lần sau làm lại sẽ có câu hỏi mới 🆕'
     : lvl===1 ? [hasNext?`🆕 Đã mở <b>Cấp 2</b> của bài này`:'', last?'':`🔓 Đã mở khoá Bài ${i+2}: ${LESSONS[i+1].title}`].filter(Boolean).join('<br>') || 'Con đã hoàn thành tất cả các bài học! 🎓'
-    : `🌟 Con đã chinh phục Cấp ${lvl}!`;
+    : hasNext ? `🌟 Con đã chinh phục Cấp ${lvl}!<br>🆕 Đã mở <b>Cấp ${lvl+1}</b> của bài này`
+    : `👑 Con đã chinh phục cấp cao nhất của bài ${LESSONS[i].title}!`;
   P.innerHTML=`<div class="center result">
-    <div class="big">${ok?'🏆':'🌱'}</div>
-    <h3>${ok?'Con đã qua bài!':'Gần được rồi!'}</h3>
+    <div class="big ${ok?'trophy':''}">${ok?pickOne(['🏆','🥇','👑','🎖️','🏅','🦄','🚀','🌟']):'🌱'}</div>
+    <h3>${ok?pickOne(['Con đã qua bài!','Qua bài rồi! Hoan hô!','Con giỏi quá đi!','Xuất sắc! Qua bài rồi!','Siêu sao tiếng Anh!']):'Gần được rồi!'}</h3>
     <div class="sc">Đúng ${sc}/${n} câu ${ok?'':'— cần '+PASS+' câu để qua bài'}</div>
     ${ok?`<div class="st">${stars(st)}</div>`:''}
     <p class="hint">${ok?unlockMsg:'Ôn lại từ vựng và ngữ pháp rồi thử lại nhé (lần sau có câu hỏi mới). Con làm được mà! 💪'}</p>

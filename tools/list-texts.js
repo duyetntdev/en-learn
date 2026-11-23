@@ -6,11 +6,12 @@ const vm = require('vm');
 
 const read = f => fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8');
 const ctx = {};
-vm.runInNewContext(read('lessons.js') + '\n' + read('lessons2.js') + '\nthis.LESSONS = LESSONS; this.LEVEL2 = LEVEL2;', ctx);
+vm.runInNewContext(read('lessons.js') + '\n' + read('lessons2.js') + '\n' + read('lessons3.js') +
+  '\nthis.LESSONS = LESSONS; this.LEVEL2 = LEVEL2; this.LEVEL3 = LEVEL3;', ctx);
 
 // Phải giống hệt hàm slug() trong js/app.js
 const slug = t => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-const BOYS = ['Nam', 'Tom', 'Bin'];          // nhân vật nam dùng giọng nam
+const BOYS = ['Nam', 'Tom', 'Bin'];          // nhân vật nam dùng giọng nam (còn lại: giọng nữ)
 const out = new Map();
 const add = (text, voice = 'af_heart') => {
   text = String(text).trim();
@@ -18,7 +19,7 @@ const add = (text, voice = 'af_heart') => {
   if (s && !out.has(s)) out.set(s, { text, voice, file: s + '.mp3' });
 };
 
-for (const L of [...ctx.LESSONS, ...Object.values(ctx.LEVEL2)]) {
+for (const L of [...ctx.LESSONS, ...Object.values(ctx.LEVEL2), ...Object.values(ctx.LEVEL3)]) {
   L.words.forEach(w => add(w[0]));
   L.dialog.forEach(d => add(d[1], BOYS.includes(d[0]) ? 'am_puck' : 'af_heart'));
   L.grammar.examples.forEach(x => add(x[0]));
