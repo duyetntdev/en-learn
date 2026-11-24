@@ -4,4 +4,19 @@ services:
     container_name: en-learn
     ports:
       - "8080:80"
+    depends_on:
+      - api
     restart: unless-stopped
+
+  # Máy chủ lưu tiến độ học (server/app.py), dữ liệu nằm trong volume en-learn-data
+  api:
+    image: python:3.12-alpine
+    container_name: en-learn-api
+    command: ["python", "/app/app.py", "--host", "0.0.0.0", "--port", "8090", "--db", "/data/en-learn.db"]
+    volumes:
+      - ./server:/app:ro
+      - en-learn-data:/data
+    restart: unless-stopped
+
+volumes:
+  en-learn-data:

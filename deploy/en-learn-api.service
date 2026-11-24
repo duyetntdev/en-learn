@@ -1,0 +1,26 @@
+# Máy chủ lưu tiến độ học (server/app.py) – cài bằng deploy/setup-server.sh
+[Unit]
+Description=Be Vui Hoc Tieng Anh - may chu luu tien do
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/en-learn-api/app.py --host 127.0.0.1 --port 8090 --db /var/lib/en-learn/en-learn.db
+Environment=PYTHONUNBUFFERED=1
+# Chạy bằng user tạm do systemd tạo, chỉ được ghi vào /var/lib/en-learn
+DynamicUser=yes
+StateDirectory=en-learn
+Restart=always
+RestartSec=2
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=200M
+
+[Install]
+WantedBy=multi-user.target

@@ -136,6 +136,25 @@ button:focus-visible{outline:3px solid var(--c);outline-offset:3px}
 .modal{position:fixed;inset:0;background:rgba(43,42,76,.45);display:grid;place-items:center;z-index:50;padding:20px}
 .modal .box{background:#fff;border-radius:24px;padding:24px;max-width:380px;text-align:center}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:16px;font-weight:800;z-index:60;box-shadow:var(--shadow)}
+/* Người học */
+.login{max-width:480px;margin:6vh auto 0;text-align:center;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 22px}
+.login .owl.big{font-size:80px;animation:bob 3s ease-in-out infinite}
+.login h1{font-size:32px;margin:4px 0 8px}.login h1 span{color:var(--accent)}
+.login form{display:flex;flex-direction:column;gap:8px;text-align:left;margin-top:8px}
+.login label{font-weight:800}
+.login input{font:inherit;font-size:22px;font-weight:800;padding:12px 16px;border-radius:16px;border:3px solid #E6D7BB;background:#FFFDF8;color:var(--ink);width:100%}
+.login input:focus{outline:none;border-color:var(--c)}
+.login .btn{margin-top:6px;font-size:19px}
+.nmhelp{font-size:14px;font-weight:700;color:var(--muted)}
+.nmhelp.bad{color:var(--bad)}
+.lbox{margin-top:16px;padding:14px;border-radius:18px;background:#FFF4CC;font-weight:700}
+.lbox.bad{background:#FDE2DF;color:var(--bad)}
+.lbox .row{margin-top:10px}
+.hint.small{font-size:14px;margin-top:14px}
+.who{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px 16px}
+.who .avatar{font-size:34px}
+.who b{font-family:'Baloo 2';font-size:20px}
+.sync{font-weight:800}.sync.ok{color:var(--ok)}.sync.saving{color:var(--muted)}.sync.offline{color:var(--bad)}
 /* Cấp độ */
 .lvrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
 .lvtag{font-size:12px;font-weight:800;padding:3px 8px;border-radius:99px;background:color-mix(in srgb,var(--c) 14%,white);color:var(--ink);white-space:nowrap}

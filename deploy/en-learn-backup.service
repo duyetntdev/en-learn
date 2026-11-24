@@ -1,0 +1,13 @@
+# Sao lưu cơ sở dữ liệu tiến độ mỗi ngày (giữ 14 bản gần nhất)
+[Unit]
+Description=Be Vui Hoc Tieng Anh - sao luu tien do
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/en-learn-api/backup.py /var/lib/en-learn/en-learn.db /var/lib/en-learn/backups 14
+DynamicUser=yes
+StateDirectory=en-learn
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes

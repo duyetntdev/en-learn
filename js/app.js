@@ -4,7 +4,7 @@ const PASS = 12, TEST_N = 15;   // bài kiểm tra 15 câu, đúng từ 12 câu 
 const KEY='beVuiHocTiengAnh.v1';
 let progress = {};   // {lessonIndex: stars}
 try{ progress = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ progress = {}; }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(progress)); }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(progress)); }catch(e){} scheduleSync(); }
 /* Cấp độ: Cấp 1 là bài trong lessons.js, Cấp 2 lấy từ LEVEL2 (lessons2.js), Cấp 3 từ LEVEL3 (lessons3.js).
    Qua cấp trước mới mở cấp sau. Tiến độ lưu theo khoá "i" (Cấp 1, giữ tương thích bản cũ), "i-2", "i-3". */
 const EXTRA = [typeof LEVEL2!=='undefined'?LEVEL2:{}, typeof LEVEL3!=='undefined'?LEVEL3:{}];   // Cấp 2, Cấp 3, ...
@@ -22,10 +22,148 @@ const startLevel = i => { let n=1; while(n<nLevels(i) && passed(i,n)) n++; retur
 const SEEN_KEY='beVuiHocTiengAnh.seen';
 let seen = {};
 try{ seen = JSON.parse(localStorage.getItem(SEEN_KEY)) || {}; }catch(e){ seen = {}; }
-function markSeen(keys){ keys.forEach(k=>seen[k]=(seen[k]||0)+1); try{ localStorage.setItem(SEEN_KEY, JSON.stringify(seen)); }catch(e){} }
+function saveSeen(){ try{ localStorage.setItem(SEEN_KEY, JSON.stringify(seen)); }catch(e){} }
+function markSeen(keys){ keys.forEach(k=>seen[k]=(seen[k]||0)+1); saveSeen(); scheduleSync(); }
 // Lấy k phần tử ít gặp nhất; cùng số lần gặp thì chọn ngẫu nhiên
 function fresh(items, k, keyOf){
   return items.map(x=>[seen[keyOf(x)]||0, Math.random(), x]).sort((a,b)=>a[0]-b[0]||a[1]-b[1]).slice(0,k).map(a=>a[2]);
+}
+
+/* ================== NGƯỜI HỌC & ĐỒNG BỘ ==================
+   Bé nhập tên (chỉ chữ không dấu và số, 3–20 ký tự, không trùng). Tiến độ lưu trên máy chủ
+   (server/app.py) theo tên, nên học trên máy khác chỉ cần nhập đúng tên. Trình duyệt vẫn giữ
+   một bản sao để học được khi mất mạng; có mạng lại thì tự gửi lên. Máy chủ gộp theo số sao
+   lớn nhất nên hai thiết bị không ghi đè mất tiến độ của nhau. */
+const USER_KEY='beVuiHocTiengAnh.user';
+const NAME_RE=/^[A-Za-z0-9]{3,20}$/;
+let user=null;
+try{ user=localStorage.getItem(USER_KEY)||null; }catch(e){}
+let syncTimer=0, syncState='ok';                       // 'ok' | 'saving' | 'offline'
+const mergeMax=(a,b)=>{ const o=Object.assign({},a); for(const k in b) o[k]=Math.max(o[k]||0, b[k]||0); return o; };
+async function api(method, path, body, keepalive){
+  const r=await fetch(path,{method, keepalive:!!keepalive, cache:'no-store',
+    headers: body?{'Content-Type':'application/json'}:{}, body: body?JSON.stringify(body):undefined});
+  let data=null; try{ data=await r.json(); }catch(e){}
+  return {status:r.status, data};
+}
+const userUrl = n => 'api/users/'+encodeURIComponent(n);
+function setSync(st){ syncState=st; const el=$('#sync'); if(el) el.outerHTML=syncBadge(); }
+const syncBadge = () => `<span id="sync" class="sync ${syncState}">${syncState==='ok'?'☁️ Đã lưu':syncState==='saving'?'⏳ Đang lưu…':'⚠️ Chưa lưu được — sẽ thử lại khi có mạng'}</span>`;
+// Nhận dữ liệu từ máy chủ: gộp với bản trong máy (không bao giờ làm mất sao đã có)
+function absorb(d){
+  if(!d) return;
+  progress=mergeMax(progress, d.progress||{}); seen=mergeMax(seen, d.seen||{});
+  try{ localStorage.setItem(KEY, JSON.stringify(progress)); }catch(e){}
+  saveSeen();
+}
+function scheduleSync(){ if(!user) return; clearTimeout(syncTimer); setSync('saving'); syncTimer=setTimeout(()=>sync(),700); }
+async function sync(keepalive){
+  if(!user) return;
+  clearTimeout(syncTimer);
+  try{
+    const r=await api('PUT', userUrl(user), {progress, seen}, keepalive);
+    if(r.status===404){                                   // máy chủ chưa có (vd. dữ liệu bị xoá): tạo lại
+      const c=await api('POST','api/users',{name:user, progress, seen});
+      if(c.status!==201) throw new Error(c.status);
+      absorb(c.data);
+    } else if(r.status!==200) throw new Error(r.status);
+    else absorb(r.data);
+    setSync('ok');
+  }catch(e){ setSync('offline'); syncTimer=setTimeout(()=>sync(),15000); }
+}
+addEventListener('online', ()=>{ if(syncState==='offline') sync(); });
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden' && syncState!=='ok') sync(true); });
+// Mở trang: lấy tiến độ mới nhất trên máy chủ (bé có thể vừa học ở máy khác)
+async function refreshFromServer(){
+  if(!user) return;
+  try{
+    const r=await api('GET', userUrl(user));
+    if(r.status===200){ absorb(r.data); setSync('ok'); if($('.grid')) home(); }
+    if(r.status===200 || r.status===404) sync();          // gửi phần máy này có mà máy chủ chưa có
+  }catch(e){ setSync('offline'); }
+}
+
+function login(){
+  stopAll(); FX.stop && FX.stop();
+  document.documentElement.style.setProperty('--c','#FF8A5B');
+  const legacy = Object.keys(progress).length>0;          // tiến độ cũ trước khi có tính năng tên
+  $('#app').innerHTML=`
+  <div class="login">
+    <div class="owl big">🦉</div>
+    <h1>Bé Vui Học <span>Tiếng Anh</span></h1>
+    <p class="hint">Nhập tên của con để lưu quá trình học. Sang máy khác, chỉ cần nhập đúng tên này là học tiếp được!</p>
+    <form id="lf" autocomplete="off" novalidate>
+      <label for="nm">Tên của con</label>
+      <input id="nm" maxlength="20" inputmode="latin" autocapitalize="off" spellcheck="false" placeholder="ví dụ: Bong2019">
+      <div class="nmhelp" id="nh">Chỉ dùng chữ không dấu (a–z) và số, dài 3–20 ký tự, không có dấu cách.</div>
+      <button class="btn" id="go" type="submit">Bắt đầu học →</button>
+    </form>
+    <div id="lmsg"></div>
+    ${legacy?'<p class="hint small">💡 Tiến độ con đã học trên máy này sẽ được chuyển vào tên mới.</p>':''}
+  </div>`;
+  const nm=$('#nm'), nh=$('#nh'), msg=$('#lmsg');
+  const check=()=>{
+    const v=nm.value, bad=v && !NAME_RE.test(v);
+    nh.classList.toggle('bad', !!bad);
+    nh.textContent = !v ? 'Chỉ dùng chữ không dấu (a–z) và số, dài 3–20 ký tự, không có dấu cách.'
+      : /[^A-Za-z0-9]/.test(v) ? '❌ Không dùng dấu, dấu cách hay ký tự đặc biệt — chỉ chữ a–z và số.'
+      : v.length<3 ? '❌ Tên cần ít nhất 3 ký tự.' : '✅ Tên hợp lệ';
+    return !bad && !!v;
+  };
+  nm.oninput=()=>{ check(); msg.innerHTML=''; };
+  nm.focus();
+  const busy=on=>{ $('#go').disabled=on; $('#go').textContent=on?'Đang kiểm tra…':'Bắt đầu học →'; };
+  const enter=d=>{
+    user=d.name; try{ localStorage.setItem(USER_KEY,user); }catch(e){}
+    absorb(d); setSync('ok'); sync(); home();
+    toast(`👋 Chào ${user}! Tiến độ của con sẽ được lưu tự động.`);
+  };
+  const fail=()=>{ msg.innerHTML='<div class="lbox bad">📡 Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại nhé.</div>'; busy(false); };
+  $('#lf').onsubmit=async e=>{
+    e.preventDefault();
+    if(!check()){ nm.focus(); return; }
+    const name=nm.value; busy(true);
+    try{
+      const r=await api('GET', userUrl(name));
+      busy(false);
+      if(r.status===200){
+        const d=r.data, n=LESSONS.filter((_,i)=>(d.progress||{})[pk(i,1)]>0).length;
+        msg.innerHTML=`<div class="lbox"><div style="font-size:40px">🎒</div><b>Tên "${esc(d.name)}" đã có người học</b> — đã qua ${n}/${LESSONS.length} bài.
+          <p class="hint" style="margin:6px 0 0">Đây có đúng là con không?</p>
+          <div class="row"><button class="btn ghost" id="no">Không phải, đổi tên khác</button><button class="btn" id="yes">Đúng là con — học tiếp</button></div></div>`;
+        $('#no').onclick=()=>{ msg.innerHTML=''; nm.select(); };
+        $('#yes').onclick=()=>enter(d);
+      } else if(r.status===404){
+        msg.innerHTML=`<div class="lbox"><div style="font-size:40px">✨</div><b>"${esc(name)}"</b> là tên mới. Tạo hồ sơ cho con nhé?
+          <div class="row"><button class="btn ghost" id="no">Sửa lại tên</button><button class="btn" id="yes">Tạo hồ sơ</button></div></div>`;
+        $('#no').onclick=()=>{ msg.innerHTML=''; nm.select(); };
+        $('#yes').onclick=async()=>{
+          try{
+            const c=await api('POST','api/users',{name, progress, seen});
+            if(c.status===201) enter(c.data);
+            else if(c.status===409) msg.innerHTML='<div class="lbox bad">😮 Tên này vừa có người khác dùng mất rồi. Chọn tên khác nhé!</div>';
+            else msg.innerHTML=`<div class="lbox bad">❌ ${esc((c.data&&c.data.error)||'Có lỗi, thử lại nhé.')}</div>`;
+          }catch(e){ fail(); }
+        };
+      } else msg.innerHTML=`<div class="lbox bad">❌ ${esc((r.data&&r.data.error)||'Có lỗi, thử lại nhé.')}</div>`;
+    }catch(e){ fail(); }
+  };
+  window.scrollTo(0,0);
+}
+function logout(){
+  const m=document.createElement('div'); m.className='modal';
+  m.innerHTML=`<div class="box"><div style="font-size:50px">👋</div><h3>Đổi người học?</h3>
+    <p class="hint">Tiến độ của <b>${esc(user)}</b> vẫn được lưu trên máy chủ. Lần sau nhập lại tên <b>${esc(user)}</b> để học tiếp.</p>
+    ${syncState!=='ok'?'<p class="hint" style="color:var(--bad)">⚠️ Một phần tiến độ chưa lưu được lên máy chủ (đang mất mạng) và sẽ mất nếu đổi người lúc này.</p>':''}
+    <div class="row"><button class="btn ghost" id="no">Ở lại</button><button class="btn" id="yes">Đổi người học</button></div></div>`;
+  document.body.appendChild(m);
+  m.querySelector('#no').onclick=()=>m.remove();
+  m.querySelector('#yes').onclick=async()=>{
+    if(syncState!=='ok') await sync();
+    user=null; progress={}; seen={}; clearTimeout(syncTimer); setSync('ok');
+    try{ [USER_KEY,KEY,SEEN_KEY].forEach(k=>localStorage.removeItem(k)); }catch(e){}
+    m.remove(); login();
+  };
 }
 
 /* ================== TIỆN ÍCH ================== */
@@ -212,6 +350,7 @@ function home(){
   $('#app').innerHTML = `
   <div class="top">
     <div class="logo"><div class="owl">🦉</div><div><h1>Bé Vui Học <span>Tiếng Anh</span></h1><p>Học mỗi ngày một chút — vui ơi là vui!</p></div></div>
+    <div class="who"><span class="avatar">🧒</span><div><div class="hint" style="margin:0">Người học</div><b>${esc(user||'')}</b></div><button class="link" id="switch">Đổi người</button></div>
     <div class="prog"><b>🏅 ${done}/${LESSONS.length} bài đã qua${advDone?` · 🌟 ${advDone}/${advTotal} cấp nâng cao`:''}</b><div class="bar"><i style="width:${done/LESSONS.length*100}%"></i></div></div>
   </div>
   <div class="hello"><div style="font-size:40px">🦉</div><div class="bubble">${
@@ -234,7 +373,8 @@ function home(){
       ${N>1&&st?`<div class="lvrow">${lvTags}</div>`:''}
       <div class="state">${state}</div>
     </button>`;}).join('')}</div>
-  <div class="foot"><span>Tiến độ được lưu trên trình duyệt này. Bật loa để nghe phát âm 🔊</span><button class="link" id="reset">Xoá tiến độ</button></div>`;
+  <div class="foot"><span>${syncBadge()} · Học trên máy khác: nhập tên <b>${esc(user||'')}</b>. Bật loa để nghe phát âm 🔊</span><button class="link" id="reset">Xoá tiến độ</button></div>`;
+  $('#switch').onclick=logout;
   document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{
     const i=+b.dataset.open;
     if(!unlocked(i)){ b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); toast(`🔒 Con cần qua bài kiểm tra Bài ${i} trước nhé!`); return; }
@@ -242,10 +382,16 @@ function home(){
   });
   $('#reset').onclick=()=>{
     const m=document.createElement('div'); m.className='modal';
-    m.innerHTML=`<div class="box"><div style="font-size:50px">🗑️</div><h3>Xoá toàn bộ tiến độ?</h3><p class="hint">Tất cả bài sẽ bị khoá lại trừ Bài 1.</p><div class="row"><button class="btn ghost" id="no">Không</button><button class="btn" id="yes" style="--c:#F0554A">Xoá</button></div></div>`;
+    m.innerHTML=`<div class="box"><div style="font-size:50px">🗑️</div><h3>Xoá toàn bộ tiến độ?</h3><p class="hint">Tất cả bài của <b>${esc(user||'')}</b> sẽ bị khoá lại trừ Bài 1, trên mọi thiết bị.</p><div class="row"><button class="btn ghost" id="no">Không</button><button class="btn" id="yes" style="--c:#F0554A">Xoá</button></div></div>`;
     document.body.appendChild(m);
     m.querySelector('#no').onclick=()=>m.remove();
-    m.querySelector('#yes').onclick=()=>{progress={};save();seen={};try{localStorage.removeItem(SEEN_KEY);}catch(e){}m.remove();home();};
+    m.querySelector('#yes').onclick=async()=>{
+      progress={}; seen={};
+      try{ localStorage.setItem(KEY,'{}'); localStorage.removeItem(SEEN_KEY); }catch(e){}
+      m.remove(); home();
+      try{ const r=await api('PUT', userUrl(user), {progress:{}, seen:{}, replace:true}); setSync(r.status===200?'ok':'offline'); }
+      catch(e){ setSync('offline'); toast('⚠️ Chưa xoá được trên máy chủ — kiểm tra mạng rồi thử lại'); }
+    };
   };
   stopAll();
   window.scrollTo(0,0);
@@ -476,4 +622,5 @@ function testResult(i,lvl,sc,n){
   else { $('#r1').onclick=()=>lesson(i,'vocab',lvl); $('#r2').onclick=()=>runQuiz(P, makeTest(lv(i,lvl),key), (s,m)=>testResult(i,lvl,s,m), 'Kiểm tra'); }
 }
 
-home();
+// Chưa có tên thì bắt buộc nhập tên trước khi học
+if(user && NAME_RE.test(user)){ home(); refreshFromServer(); } else { user=null; login(); }

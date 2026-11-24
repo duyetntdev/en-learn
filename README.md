@@ -3,10 +3,17 @@
 Website học tiếng Anh cho trẻ em: từ vựng có hình, hội thoại, ngữ pháp, luyện tập và bài kiểm tra.
 Bé phải qua bài kiểm tra (đúng ≥ 12/15 câu) mới mở được bài tiếp theo.
 Qua Cấp 1 của một bài sẽ mở **Cấp 2**, qua Cấp 2 mở **Cấp 3** — cùng chủ đề, nội dung mới và khó dần. Mỗi lần làm lại bài kiểm tra,
-ứng dụng ưu tiên những câu bé chưa gặp (ghi nhớ trong trình duyệt).
+ứng dụng ưu tiên những câu bé chưa gặp.
 
-Đây là **website tĩnh**: chỉ gồm HTML/CSS/JS và file mp3, không cần database hay backend.
-Tiến độ học được lưu trong trình duyệt của bé (localStorage).
+**Lưu tiến độ theo tên:** lần đầu vào, bé phải nhập tên (chỉ chữ không dấu và số, 3–20 ký tự, không trùng,
+không phân biệt hoa thường). Tiến độ được lưu trên máy chủ theo tên này, nên sang máy khác chỉ cần nhập
+đúng tên là học tiếp. Trình duyệt vẫn giữ một bản sao để học được khi mất mạng; có mạng lại thì tự gửi lên.
+Máy chủ gộp theo số sao lớn nhất, nên học song song trên hai máy cũng không mất tiến độ.
+
+Lưu ý: không có mật khẩu — ai nhập đúng tên thì vào được hồ sơ đó (phù hợp cho gia đình / lớp học).
+
+Gồm trang web tĩnh (HTML/CSS/JS + mp3) và một máy chủ nhỏ `server/app.py` (chỉ dùng thư viện có sẵn
+của Python, dữ liệu trong SQLite).
 
 ## Cấu trúc thư mục
 
@@ -21,6 +28,10 @@ en-learn/
 ├── js/fx.js              Hiệu ứng vui: pháo hoa, chùm sao, chuỗi câu đúng
 ├── audio/*.mp3           1001 file phát âm (tên file = câu viết thường, nối bằng dấu -)
 ├── images/               Ảnh minh hoạ (tuỳ chọn, mặc định dùng emoji)
+├── server/app.py         Máy chủ lưu tiến độ (API /api/users/<tên>, SQLite)
+├── server/backup.py      Sao lưu cơ sở dữ liệu
+├── deploy/               File cài máy chủ lên server (systemd, nginx) – deploy.sh tự dùng
+├── deploy.sh             Deploy lên en.duyetnt.com
 ├── tools/                Công cụ tạo file âm thanh (không deploy)
 ├── Dockerfile, nginx.conf, docker-compose.yml
 └── README.md
@@ -30,8 +41,8 @@ en-learn/
 
 ```bash
 cd en-learn
-python3 -m http.server 8000
-# mở http://localhost:8000
+python3 server/app.py --port 8000 --static .
+# mở http://localhost:8000  (dữ liệu thử lưu ở server/data/en-learn.db)
 ```
 
 ## Deploy lên server
@@ -44,12 +55,18 @@ scp -r en-learn user@your-server:/opt/
 ssh user@your-server
 cd /opt/en-learn
 docker compose up -d --build
-# website chạy ở http://your-server:8080
+# website chạy ở http://your-server:8080, tiến độ lưu trong volume Docker "en-learn-data"
 ```
 
 Đổi cổng trong `docker-compose.yml` (`"8080:80"` → `"80:80"`) nếu muốn chạy thẳng cổng 80.
 
-### Cách 2 – Nginx có sẵn trên server
+### Cách 2 – Nginx có sẵn trên server (cách đang dùng cho en.duyetnt.com)
+
+Với en.duyetnt.com chỉ cần chạy `./deploy.sh`: script upload trang web, lần đầu tự cài máy chủ lưu tiến độ
+(`deploy/setup-server.sh`: dịch vụ systemd `en-learn-api`, sao lưu hằng ngày lúc 3:30 giữ 14 bản trong
+`/var/lib/en-learn/backups`, thêm `location /api/` vào nginx), các lần sau chỉ cập nhật file đã thay đổi.
+
+Cài tay trên server khác:
 
 ```bash
 sudo mkdir -p /var/www/en-learn
@@ -66,10 +83,10 @@ sudo nginx -t && sudo systemctl reload nginx
 
 Cài HTTPS miễn phí: `sudo certbot --nginx -d ten-mien-cua-ban.com`
 
-### Cách 3 – Hosting tĩnh miễn phí
+Sau đó cài máy chủ lưu tiến độ: chép `server/*.py` và `deploy/*` lên server rồi chạy
+`sudo bash deploy/setup-server.sh <thư mục chứa các file đó>` (sửa đường dẫn `SITE` trong script cho đúng tên miền).
 
-Kéo thả các file `index.html`, `css/`, `js/`, `audio/`, `images/` lên **Netlify**, **Vercel**,
-**Cloudflare Pages** hoặc **GitHub Pages**. Không cần cấu hình thêm.
+> Hosting tĩnh (Netlify, GitHub Pages…) không còn dùng được vì cần máy chủ `server/app.py` để lưu tiến độ.
 
 ## Thêm hoặc sửa bài học
 
