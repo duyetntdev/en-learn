@@ -30,7 +30,7 @@ Quản trị trên server (bé quên PIN...): dùng deploy/admin.sh, ví dụ
   ssh ... 'sudo /opt/en-learn-api/admin.sh --reset-pin Bong2019'   (xoá PIN, lần sau bé đặt PIN mới)
   ssh ... 'sudo /opt/en-learn-api/admin.sh --list-users'
 """
-import argparse, datetime, hashlib, hmac, json, os, re, secrets, sqlite3, threading, time
+import argparse, datetime, hashlib, hmac, json, os, re, secrets, sqlite3, threading, time, urllib.request
 from http import HTTPStatus
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import unquote, urlparse
@@ -47,6 +47,8 @@ VN = datetime.timezone(datetime.timedelta(hours=7))           # ngày / tuần t
 
 db_lock = threading.Lock()
 db = None
+# Báo lượt truy cập cho admin.duyetnt.com (cổng nội bộ). Đặt ADMIN_INGEST= (rỗng) để tắt.
+ADMIN_INGEST = os.environ.get('ADMIN_INGEST', 'http://127.0.0.1:8096/ingest')
 
 
 def open_db(path):
@@ -199,6 +201,21 @@ class Handler(SimpleHTTPRequestHandler):
     server_version = 'en-learn'
     static_dir = None
 
+    def report(self, name, kind):
+        """Gửi sự kiện (tên, IP, trình duyệt) cho trang admin – chạy nền, lỗi thì bỏ qua, không làm chậm bé."""
+        if not ADMIN_INGEST:
+            return
+        ip = (self.headers.get('X-Forwarded-For') or '').split(',')[-1].strip() or self.client_address[0]
+        body = json.dumps({'site': 'en', 'user': name, 'kind': kind, 'ip': ip,
+                           'ua': (self.headers.get('User-Agent') or '')[:300]}).encode()
+        def send():
+            try:
+                urllib.request.urlopen(urllib.request.Request(ADMIN_INGEST, body, {'Content-Type': 'application/json'}),
+                                       timeout=2).close()
+            except Exception:
+                pass
+        threading.Thread(target=send, daemon=True).start()
+
     def log_message(self, fmt, *args):            # log gọn, không ghi nội dung hay mã PIN
         print('%s %s' % (self.command, urlparse(self.path).path), flush=True)
 
@@ -257,7 +274,10 @@ class Handler(SimpleHTTPRequestHandler):
         if p == ['api', 'me']:
             with db_lock:
                 u = self.auth_user()
-            return self.send_json(HTTPStatus.OK, user_json(u)) if u else self.error(HTTPStatus.UNAUTHORIZED, 'Cần đăng nhập lại')
+            if not u:
+                return self.error(HTTPStatus.UNAUTHORIZED, 'Cần đăng nhập lại')
+            self.send_json(HTTPStatus.OK, user_json(u))
+            return self.report(u['name'], 'open')
         if len(p) == 3 and p[:2] == ['api', 'users']:
             if not NAME_RE.match(p[2]):
                 return self.error(HTTPStatus.BAD_REQUEST, 'Tên không hợp lệ')
@@ -312,6 +332,7 @@ class Handler(SimpleHTTPRequestHandler):
             db.commit()
             u = get_user(name.lower())
         self.send_json(HTTPStatus.CREATED, user_json(u, tok))
+        self.report(u['name'], 'register')
 
     def login(self, data):
         name, pin = data.get('name'), data.get('pin')
@@ -347,6 +368,7 @@ class Handler(SimpleHTTPRequestHandler):
             db.commit()
             u = get_user(u['key'])
         self.send_json(HTTPStatus.OK, user_json(u, tok))
+        self.report(u['name'], 'login')
 
     def set_first_pin(self, name, data):
         """Hồ sơ tạo từ trước khi có PIN: đặt PIN lần đầu."""
@@ -367,6 +389,7 @@ class Handler(SimpleHTTPRequestHandler):
             db.commit()
             u = get_user(u['key'])
         self.send_json(HTTPStatus.OK, user_json(u, tok))
+        self.report(u['name'], 'login')
 
     def do_PUT(self):
         if self.path_parts() != ['api', 'me']:
@@ -393,6 +416,7 @@ class Handler(SimpleHTTPRequestHandler):
             db.commit()
             u = get_user(u['key'])
         self.send_json(HTTPStatus.OK, user_json(u))
+        self.report(u['name'], 'save')
 
     def do_DELETE(self):
         return self.error(HTTPStatus.METHOD_NOT_ALLOWED, 'Không hỗ trợ')
