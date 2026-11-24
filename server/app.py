@@ -21,6 +21,10 @@ API (JSON):
                                           all: theo tổng số sao; week: theo số sao giành được từ thứ Hai
                                           (giờ Việt Nam). Bằng điểm thì ai qua nhiều cấp hơn đứng trước.
 
+Cổng quản trị nội bộ (--admin-port, chỉ nghe 127.0.0.1, KHÔNG đưa ra nginx; trang admin.duyetnt.com gọi vào):
+  GET  /users               → {users: [{name, hasPin, locked, levels, updated}]}
+  POST /reset-pin {name}    → 200 {ok, name} | 404 – xoá PIN, mở khoá, huỷ mọi vé; lần sau bé đặt PIN mới
+
 Sai PIN 5 lần liên tiếp thì hồ sơ bị khoá 15 phút.
 Tên: chỉ chữ không dấu và số, 3–20 ký tự, không phân biệt hoa thường.
 
@@ -98,6 +102,17 @@ def hash_pin(pin, salt):
 def new_pin(pin):
     salt = secrets.token_hex(16)
     return hash_pin(pin, salt), salt
+
+
+def reset_pin(key):
+    """Xoá PIN + mở khoá + huỷ mọi vé của hồ sơ. Trả về tên hồ sơ, hoặc None nếu không có. Gọi khi đã giữ db_lock."""
+    u = get_user(key)
+    if not u:
+        return None
+    db.execute('UPDATE users SET pin_hash=NULL, pin_salt=NULL, fails=0, locked_until=0 WHERE key=?', (key,))
+    db.execute('DELETE FROM tokens WHERE key=?', (key,))
+    db.commit()
+    return u['name']
 
 
 def new_token(key):
@@ -437,11 +452,49 @@ class Handler(SimpleHTTPRequestHandler):
         return full
 
 
+class AdminHandler(SimpleHTTPRequestHandler):
+    """Cổng quản trị nội bộ cho admin.duyetnt.com – chỉ nghe 127.0.0.1, không qua nginx."""
+    server_version = 'en-learn-admin'
+    send_json = Handler.send_json
+
+    def log_message(self, fmt, *args):
+        print('admin %s %s' % (self.command, urlparse(self.path).path), flush=True)
+
+    def do_GET(self):
+        if urlparse(self.path).path != '/users':
+            return self.send_json(HTTPStatus.NOT_FOUND, {'error': 'not found'})
+        now = int(time.time())
+        with db_lock:
+            rows = db.execute('SELECT name, pin_hash IS NOT NULL, locked_until, progress, updated FROM users '
+                              'ORDER BY updated DESC').fetchall()
+        self.send_json(HTTPStatus.OK, {'users': [
+            {'name': n, 'hasPin': bool(hp), 'locked': lu > now, 'levels': len(json.loads(pr)), 'updated': up}
+            for n, hp, lu, pr, up in rows]})
+
+    def do_POST(self):
+        if urlparse(self.path).path != '/reset-pin':
+            return self.send_json(HTTPStatus.NOT_FOUND, {'error': 'not found'})
+        try:
+            n = int(self.headers.get('Content-Length') or 0)
+            name = json.loads(self.rfile.read(min(n, 4096)) or b'{}').get('name')
+        except Exception:
+            name = None
+        if not isinstance(name, str) or not NAME_RE.match(name):
+            return self.send_json(HTTPStatus.BAD_REQUEST, {'error': 'Tên không hợp lệ'})
+        with db_lock:
+            shown = reset_pin(name.lower())
+        if not shown:
+            return self.send_json(HTTPStatus.NOT_FOUND, {'error': f'Không có hồ sơ "{name}"'})
+        print(f'admin: đã reset PIN của {shown}', flush=True)
+        self.send_json(HTTPStatus.OK, {'ok': True, 'name': shown})
+
+
 def main():
     ap = argparse.ArgumentParser(description='Máy chủ lưu tiến độ học')
     ap.add_argument('--host', default='127.0.0.1')
     ap.add_argument('--port', type=int, default=8090)
     ap.add_argument('--db', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'en-learn.db'))
+    ap.add_argument('--admin-port', type=int, help='cổng quản trị nội bộ cho admin.duyetnt.com (chỉ 127.0.0.1)')
     ap.add_argument('--static', help='thư mục trang web (chỉ khi chạy thử trên máy)')
     ap.add_argument('--reset-pin', metavar='TÊN', help='xoá mã PIN của một hồ sơ (bé quên PIN) rồi thoát')
     ap.add_argument('--delete-user', metavar='TÊN', help='xoá hẳn một hồ sơ rồi thoát')
@@ -449,10 +502,7 @@ def main():
     a = ap.parse_args()
     open_db(a.db)
     if a.reset_pin:
-        key = a.reset_pin.lower()
-        n = db.execute('UPDATE users SET pin_hash=NULL, pin_salt=NULL, fails=0, locked_until=0 WHERE key=?', (key,)).rowcount
-        db.execute('DELETE FROM tokens WHERE key=?', (key,))
-        db.commit()
+        n = reset_pin(a.reset_pin.lower())
         print(f'Đã xoá mã PIN của "{a.reset_pin}" – lần sau vào, bé sẽ đặt PIN mới.' if n else f'Không có hồ sơ "{a.reset_pin}"')
         return
     if a.delete_user:
@@ -469,6 +519,10 @@ def main():
                   f'cập nhật {time.strftime("%Y-%m-%d %H:%M", time.localtime(upd))}')
         return
     Handler.static_dir = os.path.abspath(a.static) if a.static else None
+    if a.admin_port:
+        adm = ThreadingHTTPServer(('127.0.0.1', a.admin_port), AdminHandler)
+        threading.Thread(target=adm.serve_forever, daemon=True).start()
+        print(f'Cổng quản trị nội bộ: http://127.0.0.1:{a.admin_port}', flush=True)
     srv = ThreadingHTTPServer((a.host, a.port), Handler)
     print(f'Đang chạy ở http://{a.host}:{a.port}  (db: {a.db})', flush=True)
     srv.serve_forever()

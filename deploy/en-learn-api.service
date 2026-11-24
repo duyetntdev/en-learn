@@ -4,7 +4,7 @@ Description=Be Vui Hoc Tieng Anh - may chu luu tien do
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /opt/en-learn-api/app.py --host 127.0.0.1 --port 8090 --db /var/lib/en-learn/en-learn.db
+ExecStart=/usr/bin/python3 /opt/en-learn-api/app.py --host 127.0.0.1 --port 8090 --admin-port 8091 --db /var/lib/en-learn/en-learn.db
 Environment=PYTHONUNBUFFERED=1
 # Chạy bằng user tạm do systemd tạo, chỉ được ghi vào /var/lib/en-learn
 DynamicUser=yes
