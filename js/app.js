@@ -399,6 +399,7 @@ function home(){
     <div class="logo"><div class="owl">🦉</div><div><h1>Bé Vui Học <span>Tiếng Anh</span></h1><p>Học mỗi ngày một chút — vui ơi là vui!</p></div></div>
     <div class="who"><span class="avatar">${avatar(user||'').e}</span><div><div class="hint" style="margin:0">Người học</div><b>${esc(user||'')}</b></div><button class="link" id="switch">Đổi người</button></div>
     <button class="fame-btn" id="fame"><span class="cup">🏆</span><span class="t">Bảng vinh danh<small id="myrank">${rankLabel(lastRank)}</small></span></button>
+    ${typeof castle==='function'?`<button class="fame-btn castle-btn" id="castle"><span class="cup">🏰</span><span class="t">Giải cứu công chúa<small>${castleLabel()}</small></span></button>`:''}
     <div class="prog"><div class="pct"><b>📊 Hoàn thành ${pct}%</b><span>${lvDone}/${lvTotal} cấp đã qua</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>
   </div>
   <div class="hello"><div style="font-size:40px">🦉</div><div class="bubble">${
@@ -427,6 +428,7 @@ function home(){
   <div class="foot"><span>${syncBadge()} · Học trên máy khác: nhập tên <b>${esc(user||'')}</b>. Bật loa để nghe phát âm 🔊</span><button class="link" id="reset">Xoá tiến độ</button></div>`;
   $('#switch').onclick=logout; wireSync();
   $('#fame').onclick=()=>fame('all');
+  const cb=$('#castle'); if(cb) cb.onclick=()=>castle();
   loadMyRank();
   document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{
     const i=+b.dataset.open;
@@ -657,16 +659,18 @@ function makeTest(L, key){
   return shuffle(qs).slice(0,TEST_N);
 }
 
-/* ================== BỘ CHẠY CÂU HỎI ================== */
-function runQuiz(P, qs, onDone, label){
+/* ================== BỘ CHẠY CÂU HỎI ==================
+   hooks (tuỳ chọn, dùng cho trò chơi): over() → true thì kết thúc sớm, head() → HTML thay cho dòng "Câu k/n",
+   answer(ok, el) gọi sau mỗi câu, doneLabel – chữ trên nút ở câu cuối. */
+function runQuiz(P, qs, onDone, label, hooks){
   let k=0, score=0, streak=0;
   const praise=['🎉 Giỏi lắm!','🌟 Tuyệt vời!','👏 Chính xác!','🥳 Đúng rồi!','🚀 Siêu quá!','💯 Hoàn hảo!','🦄 Xuất sắc!','🎈 Con giỏi quá!'];
   const oopsMsg=['🙈 Ê xì! Sai mất rồi!','😜 Ê xì! Suýt nữa thì đúng!','🤪 Ối, ê xì!','🙊 Ê xì! Câu sau cố lên nhé!'];
   const streakMsg=n=> n>=TEST_N ? '👑 Không sai câu nào!' : n>=6 ? `🌈 ${n} câu đúng liên tiếp! Vô địch!` : `🔥 ${n} câu đúng liên tiếp!`;
   function show(){
-    if(k>=qs.length) return onDone(score, qs.length);
+    if(k>=qs.length || (hooks && hooks.over())) return onDone(score, qs.length);
     const q=qs[k];
-    P.innerHTML=`<div class="qhead"><span>${label?label+' · ':''}Câu ${k+1}/${qs.length}</span><div class="qbar"><i style="width:${k/qs.length*100}%"></i></div><span id="qs">⭐ ${score}</span></div>
+    P.innerHTML=`<div class="qhead">${hooks && hooks.head ? hooks.head() : `<span>${label?label+' · ':''}Câu ${k+1}/${qs.length}</span><div class="qbar"><i style="width:${k/qs.length*100}%"></i></div><span id="qs">⭐ ${score}</span>`}</div>
       <div class="qprompt">${q.type==='order'?'<div class="ask">🧩 Sắp xếp các từ thành câu đúng</div><button class="say" data-say="'+esc(q.answer)+'" aria-label="Nghe gợi ý" style="margin-top:8px">🔊</button>':q.prompt}</div>
       <div id="qb"></div><div class="feed" id="fd"></div>`;
     const B=$('#qb');
@@ -711,9 +715,11 @@ function runQuiz(P, qs, onDone, label){
     }
     if(hot){ setTimeout(()=>{ fanfare(); FX.show(1400); FX.banner(streakMsg(streak)); },250); }
     if(ok && say) setTimeout(()=>speak(say),450);
+    if(hooks && hooks.answer) hooks.answer(ok, el);
+    const last = k+1>=qs.length || (hooks && hooks.over());
     const F=$('#fd'); F.className='feed '+(ok?'ok':'no');
     F.innerHTML=`<span>${ok?praise[Math.floor(Math.random()*praise.length)]:oopsMsg[Math.floor(Math.random()*oopsMsg.length)]+' Đáp án: <b style="color:var(--ink)">'+right+'</b>'}</span>
-      <button class="btn" id="cont">${k+1<qs.length?'Tiếp tục →':'Xem kết quả →'}</button>`;
+      <button class="btn" id="cont">${!last?'Tiếp tục →':(hooks&&hooks.doneLabel)||'Xem kết quả →'}</button>`;
     $('#cont').onclick=()=>{k++;show();};
     $('#cont').focus({preventScroll:true});
   }
