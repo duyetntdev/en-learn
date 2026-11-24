@@ -314,4 +314,66 @@ button:focus-visible{outline:3px solid var(--c);outline-offset:3px}
   .castle .locks{grid-template-columns:repeat(5,26px)}.castle .lk{font-size:19px}
   .castle .win{width:66px;height:62px}.castle .princess{font-size:40px;top:26px}
 }
+/* ================== Đi tìm kho báu ================== */
+.treasure-btn{background:linear-gradient(135deg,#4FC3E8,#1F8FBF);color:#fff;box-shadow:0 5px 0 #17739A,0 10px 24px rgba(23,115,154,.25)}
+.tintro{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.tintro .hint{margin:0}
+.tmap{list-style:none;margin:0;padding:18px 14px;border-radius:20px;position:relative;display:flex;flex-direction:column;gap:18px;
+  background:linear-gradient(#E3F6FF,#C9ECFF)}
+.tmap::before{content:'';position:absolute;left:52px;top:44px;bottom:44px;border-left:4px dashed #8CC9E6}
+.isle{display:flex;align-items:center;gap:16px;position:relative}
+.inode{width:76px;height:76px;flex:none;border-radius:50%;display:grid;place-items:center;position:relative;
+  background:radial-gradient(circle at 50% 70%,#F6D98C 0 55%,#8FD27A 56% 100%);border:4px solid #fff;box-shadow:0 4px 0 rgba(31,143,191,.25)}
+.inode .iemo{font-size:36px;line-height:1}
+.isle.done .inode{border-color:var(--ic)}
+.isle.done .inode::after{content:'💎';position:absolute;right:-6px;bottom:-4px;font-size:22px}
+.isle.cur .inode{border-color:var(--ic,#1F8FBF);animation:pulse 1.8s ease-in-out infinite}
+.isle.off .inode{filter:grayscale(1);opacity:.55}
+.inode.shake{animation:shake .4s}
+.inode .boat{position:absolute;left:-14px;bottom:-12px;font-size:22px;white-space:nowrap;animation:bob 2.4s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 8px color-mix(in srgb,var(--ic,#1F8FBF) 25%,transparent),0 4px 0 rgba(31,143,191,.25)}}
+.itxt{display:flex;flex-direction:column;min-width:0;background:rgba(255,255,255,.8);border-radius:14px;padding:8px 14px}
+.itxt b{font-family:'Baloo 2';font-size:20px;line-height:1.2;color:var(--ink)}
+.itxt span{font-weight:800;color:var(--ic,var(--muted));font-size:14px}
+.itxt em{font-style:normal;font-size:13px;font-weight:700;color:var(--muted)}
+.isle.cur .itxt em{color:var(--ic,#1F8FBF)}
+.isle.off .itxt{opacity:.7}
+.qprompt .situ{font-family:'Baloo 2';font-size:24px;font-weight:700;line-height:1.3;margin-top:6px;max-width:560px;margin-inline:auto}
+.why{flex-basis:100%;order:1;background:#F1F8FF;border-radius:16px;padding:12px 16px;color:var(--ink);font-size:16px;font-weight:600;line-height:1.5}
+.why b{font-weight:800}
+.feed .btn{order:2;margin-left:auto}
+.grit{font-weight:800;color:#2F9E6B;margin-bottom:4px}
+.feed.no .grit{color:#C46A00}
+.isle-won .gem{width:112px;height:112px;margin:26px auto 4px;display:grid;place-items:center;border-radius:28px;transform:rotate(45deg);
+  background:linear-gradient(135deg,#fff,color-mix(in srgb,var(--ic) 35%,white));box-shadow:0 0 0 4px var(--ic),0 10px 30px color-mix(in srgb,var(--ic) 40%,transparent);animation:pop .6s}
+.isle-won .gem span{transform:rotate(-45deg);font-size:54px}
+.isle-won h3{margin-top:22px}
+.pledge{margin:18px auto 0;max-width:520px;border:3px dashed var(--ic);border-radius:20px;padding:14px 16px;background:color-mix(in srgb,var(--ic) 8%,white)}
+.plabel{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ic)}
+.pbtn{font-family:'Baloo 2';font-size:24px;font-weight:800;line-height:1.25;margin-top:6px}
+.pvi{font-weight:700;color:var(--muted)}
+.chest{position:relative;width:190px;height:150px;margin:20px auto 6px}
+.chest .box{position:absolute;bottom:0;left:0;right:0;height:78px;background:#9A541B;border:5px solid #E9B949;border-radius:8px 8px 16px 16px}
+.chest .box::after{content:'';position:absolute;left:50%;top:6px;width:22px;height:28px;margin-left:-11px;background:#E9B949;border-radius:6px}
+.chest .lid{position:absolute;left:0;right:0;bottom:70px;height:54px;background:#B5651D;border:5px solid #E9B949;border-radius:40px 40px 6px 6px;
+  transform-origin:12% 100%;animation:lid 1s .5s ease-out forwards}
+@keyframes lid{to{transform:rotate(-28deg) translate(-8px,-14px)}}
+.chest .gems{position:absolute;left:18px;right:18px;bottom:60px;display:flex;justify-content:space-around;z-index:1}
+.chest .gems span{font-size:30px;opacity:0;transform:translateY(30px);animation:rise .6s var(--d) ease-out forwards}
+@keyframes rise{to{opacity:1;transform:translateY(-26px)}}
+.chest-h{font-size:32px;margin-top:4px}
+.cert{margin:18px auto 0;max-width:560px;border:6px double #D99A00;border-radius:18px;padding:18px 20px;background:#FFFBEA}
+.ctitle{font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#B07C00}
+.cname{font-family:'Baloo 2';font-size:28px;font-weight:800;line-height:1.2}
+.cwho{font-family:'Baloo 2';font-size:24px;font-weight:800;color:#D99A00}
+.cplist{list-style:none;margin:12px 0;padding:0;display:flex;flex-direction:column;gap:6px;text-align:left}
+.cplist li{display:flex;gap:10px;align-items:center}
+.cplist li>span{font-size:24px}
+.cplist .link{font-weight:800;text-align:left}
+.cfoot{font-size:14px;font-weight:800;color:var(--muted)}
+@media (max-width:560px){
+  .tmap::before{left:46px}.inode{width:64px;height:64px}.inode .iemo{font-size:30px}.inode .boat{font-size:18px}
+  .itxt b{font-size:18px}.qprompt .situ{font-size:20px}.pbtn{font-size:20px}.cname{font-size:24px}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){.chest .gems span{opacity:1;transform:translateY(-26px)}.chest .lid{transform:rotate(-28deg) translate(-8px,-14px)}}

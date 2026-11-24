@@ -400,6 +400,7 @@ function home(){
     <div class="who"><span class="avatar">${avatar(user||'').e}</span><div><div class="hint" style="margin:0">Người học</div><b>${esc(user||'')}</b></div><button class="link" id="switch">Đổi người</button></div>
     <button class="fame-btn" id="fame"><span class="cup">🏆</span><span class="t">Bảng vinh danh<small id="myrank">${rankLabel(lastRank)}</small></span></button>
     ${typeof castle==='function'?`<button class="fame-btn castle-btn" id="castle"><span class="cup">🏰</span><span class="t">Giải cứu công chúa<small>${castleLabel()}</small></span></button>`:''}
+    ${typeof treasure==='function'?`<button class="fame-btn treasure-btn" id="treasure"><span class="cup">🗺️</span><span class="t">Đi tìm kho báu<small>${treasureLabel()}</small></span></button>`:''}
     <div class="prog"><div class="pct"><b>📊 Hoàn thành ${pct}%</b><span>${lvDone}/${lvTotal} cấp đã qua</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>
   </div>
   <div class="hello"><div style="font-size:40px">🦉</div><div class="bubble">${
@@ -429,6 +430,7 @@ function home(){
   $('#switch').onclick=logout; wireSync();
   $('#fame').onclick=()=>fame('all');
   const cb=$('#castle'); if(cb) cb.onclick=()=>castle();
+  const tb=$('#treasure'); if(tb) tb.onclick=()=>treasure();
   loadMyRank();
   document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{
     const i=+b.dataset.open;
@@ -661,7 +663,8 @@ function makeTest(L, key){
 
 /* ================== BỘ CHẠY CÂU HỎI ==================
    hooks (tuỳ chọn, dùng cho trò chơi): over() → true thì kết thúc sớm, head() → HTML thay cho dòng "Câu k/n",
-   answer(ok, el) gọi sau mỗi câu, doneLabel – chữ trên nút ở câu cuối. */
+   answer(ok, el, q) gọi sau mỗi câu, explain(q, ok) → HTML giải thích hiện dưới đáp án,
+   doneLabel – chữ trên nút ở câu cuối. */
 function runQuiz(P, qs, onDone, label, hooks){
   let k=0, score=0, streak=0;
   const praise=['🎉 Giỏi lắm!','🌟 Tuyệt vời!','👏 Chính xác!','🥳 Đúng rồi!','🚀 Siêu quá!','💯 Hoàn hảo!','🦄 Xuất sắc!','🎈 Con giỏi quá!'];
@@ -715,10 +718,11 @@ function runQuiz(P, qs, onDone, label, hooks){
     }
     if(hot){ setTimeout(()=>{ fanfare(); FX.show(1400); FX.banner(streakMsg(streak)); },250); }
     if(ok && say) setTimeout(()=>speak(say),450);
-    if(hooks && hooks.answer) hooks.answer(ok, el);
+    if(hooks && hooks.answer) hooks.answer(ok, el, qs[k]);
     const last = k+1>=qs.length || (hooks && hooks.over());
     const F=$('#fd'); F.className='feed '+(ok?'ok':'no');
     F.innerHTML=`<span>${ok?praise[Math.floor(Math.random()*praise.length)]:oopsMsg[Math.floor(Math.random()*oopsMsg.length)]+' Đáp án: <b style="color:var(--ink)">'+right+'</b>'}</span>
+      ${hooks && hooks.explain ? hooks.explain(qs[k], ok) : ''}
       <button class="btn" id="cont">${!last?'Tiếp tục →':(hooks&&hooks.doneLabel)||'Xem kết quả →'}</button>`;
     $('#cont').onclick=()=>{k++;show();};
     $('#cont').focus({preventScroll:true});
