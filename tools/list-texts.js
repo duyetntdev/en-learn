@@ -32,8 +32,8 @@ for (const L of [...ctx.LESSONS, ...Object.values(ctx.LEVEL2), ...Object.values(
 for (const V of ctx.VIRTUES) {
   V.words.forEach(w => add(w[0]));
   V.situations.forEach(x => add(x[1]));
-  add(V.fill[0].replace('___', V.fill[1]));
-  add(V.order[0]);
+  V.fills.forEach(f => add(f[0].replace('___', f[1])));
+  V.orders.forEach(o => add(o[0]));
   add(V.pledge[0]);
 }
 console.log(JSON.stringify([...out.values()], null, 1));

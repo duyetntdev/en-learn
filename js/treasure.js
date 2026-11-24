@@ -1,7 +1,8 @@
 /* ================== TRÒ CHƠI: ĐI TÌM KHO BÁU ==================
    Hướng tới giáo dục nhân cách và rèn tính kiên trì. Nội dung ở js/virtues.js.
    - Bản đồ có các hòn đảo đức tính (VIRTUES), đi lần lượt: qua đảo trước mới mở đảo sau.
-   - Mỗi đảo 7 câu: 3 từ vựng, 2 tình huống ứng xử, 1 điền từ, 1 sắp xếp câu. Câu nào cũng có giải thích.
+   - Mỗi lượt chơi một đảo 7 câu: 3 từ vựng, 2 tình huống ứng xử, 1 điền từ, 1 sắp xếp câu, chọn từ kho câu
+     của đảo, ưu tiên câu bé chưa gặp. Câu nào cũng có giải thích.
    - Trả lời sai không bị trừ gì: câu đó quay lại cuối lượt (đáp án xáo lại) cho tới khi con làm đúng.
      Làm đúng một câu từng sai → +1 "hạt kiên trì" 🌱. Phải đúng hết mới qua đảo.
    - Qua đảo: nhận viên đá quý và một lời hứa để đọc to. Qua hết đảo: mở kho báu, nhận giấy khen,
@@ -24,14 +25,18 @@ function situQ(s){
     prompt:`<div class="ask">🤔 Tình huống</div><div class="situ">${esc(s[0])}</div>`,
     options:shuffle([s[1],...s[2]]).map(o=>({label:esc(o),val:o})), answer:s[1], show:esc(s[1]), sayAfter:s[1], why:s[3]};
 }
+// Chọn câu cho một lượt: ưu tiên câu bé ít gặp nhất (đếm trong `seen`, khoá treasure|q|<đảo>|<loại>|<câu>)
 function isleQs(v){
   const L={words:v.words}, kinds=shuffle(['vi','en','listen']);   // từ trừu tượng nên không hỏi kiểu nhìn hình
+  const K = t => x => TK('q|'+v.id+'|'+t+'|'+(t==='s'?x[1]:x[0]));
+  const ws=fresh(v.words,3,K('w')), ss=fresh(v.situations,2,K('s')), fs=fresh(v.fills,1,K('f')), os=fresh(v.orders,1,K('o'));
+  markSeen([...ws.map(K('w')), ...ss.map(K('s')), ...fs.map(K('f')), ...os.map(K('o'))]);
   const mk=[
-    ...shuffle(v.words).slice(0,3).map((w,j)=>()=>Object.assign(vocabQ(L,w,kinds[j]),
+    ...ws.map((w,j)=>()=>Object.assign(vocabQ(L,w,kinds[j]),
       {why:`<b>${esc(w[0])}</b> = ${esc(w[1])} ${w[2]}. ${v.notes[w[0]]||''}`})),
-    ...shuffle(v.situations).slice(0,2).map(s=>()=>situQ(s)),
-    ()=>Object.assign(fillQ(v.fill), {why:v.fill[3]}),
-    ()=>Object.assign(orderQ(v.order[0]), {why:`<b>${esc(v.order[0])}</b> = ${esc(v.order[1])} ${v.order[2]}`}),
+    ...ss.map(s=>()=>situQ(s)),
+    ...fs.map(f=>()=>Object.assign(fillQ(f), {why:f[3]})),
+    ...os.map(o=>()=>Object.assign(orderQ(o[0]), {why:`<b>${esc(o[0])}</b> = ${esc(o[1])} ${o[2]}`})),
   ];
   return shuffle(mk).map(f=>Object.assign(f(), {mk:f}));
 }
