@@ -151,7 +151,7 @@ function login(prefill){
         <div class="nmhelp" id="ph"></div>
         <div class="row"><button type="button" class="btn ghost" id="back">← Đổi tên</button><button class="btn" id="pgo">${label}</button></div>
       </form>
-      <p class="hint small">${mode==='enter'?'Quên mã PIN? Nhờ bố mẹ liên hệ người quản lý trang để đặt lại.':'💡 Bố mẹ ghi nhớ mã PIN giúp con nhé.'}</p></div>`;
+      <p class="hint small">${mode==='enter'?`Quên mã PIN? Bố mẹ nhắn Zalo <a href="${SUPPORT_ZALO_URL}" target="_blank" rel="noopener">${SUPPORT_ZALO}</a> để được đặt lại.`:'💡 Bố mẹ ghi nhớ mã PIN giúp con nhé.'}</p></div>`;
     const pin=$('#pin'), pin2=$('#pin2'), ph=$('#ph'), go=$('#pgo');
     [pin,pin2].filter(Boolean).forEach(x=>x.oninput=()=>{ x.value=x.value.replace(/\D/g,'').slice(0,4); ph.textContent=''; ph.classList.remove('bad'); });
     $('#sp').onchange=e=>[pin,pin2].filter(Boolean).forEach(x=>x.type=e.target.checked?'text':'password');
@@ -212,6 +212,19 @@ function logout(){
     try{ [USER_KEY,TOKEN_KEY,KEY,SEEN_KEY].forEach(k=>localStorage.removeItem(k)); }catch(e){}
     m.remove(); login();
   };
+}
+
+/* ================== HỖ TRỢ ================== */
+const SUPPORT_ZALO = '0985 626 134', SUPPORT_ZALO_URL = 'https://zalo.me/0985626134';
+const supportHTML = () => `<div class="support">
+  <span class="sic">💬</span>
+  <div><b>Cần hỗ trợ?</b> Quên mã PIN, báo lỗi hay góp ý, bố mẹ nhắn Zalo:
+    <a href="${SUPPORT_ZALO_URL}" target="_blank" rel="noopener">${SUPPORT_ZALO}</a></div>
+  <button class="link" id="copyzalo" type="button" onclick="copyZalo()">Sao chép số</button></div>`;
+function copyZalo(){
+  const n=SUPPORT_ZALO.replace(/\s/g,'');
+  const done=()=>toast('📋 Đã sao chép số Zalo '+SUPPORT_ZALO);
+  try{ navigator.clipboard.writeText(n).then(done, ()=>toast('Số Zalo: '+SUPPORT_ZALO)); }catch(e){ toast('Số Zalo: '+SUPPORT_ZALO); }
 }
 
 /* ================== TIỆN ÍCH ================== */
@@ -426,7 +439,8 @@ function home(){
       <div class="lpct"><div class="lbar"><i style="width:${lp}%"></i></div><span>${lp}%</span></div>
       <div class="state">${state}</div>
     </button>`;}).join('')}</div>
-  <div class="foot"><span>${syncBadge()} · Học trên máy khác: nhập tên <b>${esc(user||'')}</b>. Bật loa để nghe phát âm 🔊</span><button class="link" id="reset">Xoá tiến độ</button></div>`;
+  <div class="foot"><span>${syncBadge()} · Học trên máy khác: nhập tên <b>${esc(user||'')}</b>. Bật loa để nghe phát âm 🔊</span><button class="link" id="reset">Xoá tiến độ</button></div>
+  ${supportHTML()}`;
   $('#switch').onclick=logout; wireSync();
   $('#fame').onclick=()=>fame('all');
   const cb=$('#castle'); if(cb) cb.onclick=()=>castle();
