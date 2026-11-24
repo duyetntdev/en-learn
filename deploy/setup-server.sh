@@ -7,6 +7,7 @@ SITE=/etc/nginx/sites-available/en.duyetnt.com
 
 install -d -m 755 /opt/en-learn-api
 install -m 644 "$SRC/app.py" "$SRC/backup.py" /opt/en-learn-api/
+install -m 755 "$SRC/admin.sh" /opt/en-learn-api/
 install -m 644 "$SRC/en-learn-api.service" "$SRC/en-learn-backup.service" "$SRC/en-learn-backup.timer" /etc/systemd/system/
 install -m 644 "$SRC/nginx-ratelimit.conf" /etc/nginx/conf.d/en-learn-ratelimit.conf
 systemctl daemon-reload

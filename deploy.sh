@@ -57,7 +57,7 @@ tar czf - "${FILES[@]}" | ssh -i "$SSH_KEY" -o ConnectTimeout=15 "$SERVER" "
 echo "🖥️  Cập nhật máy chủ lưu tiến độ ..."
 # Lần đầu: cài dịch vụ + cấu hình nginx (deploy/setup-server.sh). Các lần sau: chỉ thay file đã đổi rồi khởi động lại.
 tar czf - -C server app.py backup.py -C ../deploy en-learn-api.service en-learn-backup.service en-learn-backup.timer \
-    nginx-api-location.conf nginx-ratelimit.conf setup-server.sh | ssh -i "$SSH_KEY" -o ConnectTimeout=15 "$SERVER" '
+    nginx-api-location.conf nginx-ratelimit.conf setup-server.sh admin.sh | ssh -i "$SSH_KEY" -o ConnectTimeout=15 "$SERVER" '
   set -e
   T=/tmp/en-learn-setup; rm -rf $T; mkdir -p $T; tar xzf - -C $T
   if [ ! -f /etc/systemd/system/en-learn-api.service ]; then
@@ -65,6 +65,7 @@ tar czf - -C server app.py backup.py -C ../deploy en-learn-api.service en-learn-
   else
     changed=0
     for f in app.py backup.py; do cmp -s $T/$f /opt/en-learn-api/$f || { sudo install -m 644 $T/$f /opt/en-learn-api/; changed=1; }; done
+    cmp -s $T/admin.sh /opt/en-learn-api/admin.sh || sudo install -m 755 $T/admin.sh /opt/en-learn-api/
     for f in en-learn-api.service en-learn-backup.service en-learn-backup.timer; do
       cmp -s $T/$f /etc/systemd/system/$f || { sudo install -m 644 $T/$f /etc/systemd/system/; sudo systemctl daemon-reload; changed=1; }; done
     if [ $changed = 1 ]; then sudo systemctl restart en-learn-api.service; echo "   Đã cập nhật và khởi động lại"; else echo "   Không có thay đổi"; fi

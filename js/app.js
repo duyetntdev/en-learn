@@ -36,25 +36,32 @@ function fresh(items, k, keyOf){
 }
 
 /* ================== NGƯỜI HỌC & ĐỒNG BỘ ==================
-   Bé nhập tên (chỉ chữ không dấu và số, 3–20 ký tự, không trùng). Tiến độ lưu trên máy chủ
-   (server/app.py) theo tên, nên học trên máy khác chỉ cần nhập đúng tên. Trình duyệt vẫn giữ
-   một bản sao để học được khi mất mạng; có mạng lại thì tự gửi lên. Máy chủ gộp theo số sao
-   lớn nhất nên hai thiết bị không ghi đè mất tiến độ của nhau. */
-const USER_KEY='beVuiHocTiengAnh.user';
-const NAME_RE=/^[A-Za-z0-9]{3,20}$/;
-let user=null;
-try{ user=localStorage.getItem(USER_KEY)||null; }catch(e){}
-let syncTimer=0, syncState='ok';                       // 'ok' | 'saving' | 'offline'
+   Bé nhập tên (chỉ chữ không dấu và số, 3–20 ký tự, không trùng) và mã PIN 4 số. Đăng nhập đúng thì
+   máy chủ (server/app.py) cấp một "vé" cho thiết bị; trình duyệt dùng vé đó để đọc / ghi tiến độ
+   (không lưu mã PIN). Sang máy khác chỉ cần nhập đúng tên + PIN. Trình duyệt vẫn giữ một bản sao để
+   học được khi mất mạng; có mạng lại thì tự gửi lên. Máy chủ gộp theo số sao lớn nhất nên hai thiết bị
+   không ghi đè mất tiến độ của nhau. */
+const USER_KEY='beVuiHocTiengAnh.user', TOKEN_KEY='beVuiHocTiengAnh.token';
+const NAME_RE=/^[A-Za-z0-9]{3,20}$/, PIN_RE=/^[0-9]{4}$/;
+let user=null, token=null;
+try{ user=localStorage.getItem(USER_KEY)||null; token=localStorage.getItem(TOKEN_KEY)||null; }catch(e){}
+let syncTimer=0, syncState='ok';                       // 'ok' | 'saving' | 'offline' | 'auth'
 const mergeMax=(a,b)=>{ const o=Object.assign({},a); for(const k in b) o[k]=Math.max(o[k]||0, b[k]||0); return o; };
 async function api(method, path, body, keepalive){
-  const r=await fetch(path,{method, keepalive:!!keepalive, cache:'no-store',
-    headers: body?{'Content-Type':'application/json'}:{}, body: body?JSON.stringify(body):undefined});
+  const headers={};
+  if(body) headers['Content-Type']='application/json';
+  if(token) headers['Authorization']='Bearer '+token;
+  const r=await fetch(path,{method, keepalive:!!keepalive, cache:'no-store', headers, body: body?JSON.stringify(body):undefined});
   let data=null; try{ data=await r.json(); }catch(e){}
   return {status:r.status, data};
 }
 const userUrl = n => 'api/users/'+encodeURIComponent(n);
-function setSync(st){ syncState=st; const el=$('#sync'); if(el) el.outerHTML=syncBadge(); }
-const syncBadge = () => `<span id="sync" class="sync ${syncState}">${syncState==='ok'?'☁️ Đã lưu':syncState==='saving'?'⏳ Đang lưu…':'⚠️ Chưa lưu được — sẽ thử lại khi có mạng'}</span>`;
+function setSync(st){ syncState=st; const el=$('#sync'); if(el){ el.outerHTML=syncBadge(); wireSync(); } }
+const syncBadge = () => `<span id="sync" class="sync ${syncState}">${
+  syncState==='ok'?'☁️ Đã lưu' : syncState==='saving'?'⏳ Đang lưu…'
+  : syncState==='auth'?'<button class="link" id="relogin">🔑 Cần nhập lại mã PIN để lưu — bấm vào đây</button>'
+  : '⚠️ Chưa lưu được — sẽ thử lại khi có mạng'}</span>`;
+function wireSync(){ const b=$('#relogin'); if(b) b.onclick=()=>login(user); }
 // Nhận dữ liệu từ máy chủ: gộp với bản trong máy (không bao giờ làm mất sao đã có)
 function absorb(d){
   if(!d) return;
@@ -62,52 +69,51 @@ function absorb(d){
   try{ localStorage.setItem(KEY, JSON.stringify(progress)); }catch(e){}
   saveSeen();
 }
-function scheduleSync(){ if(!user) return; clearTimeout(syncTimer); setSync('saving'); syncTimer=setTimeout(()=>sync(),700); }
+// Vé không còn hợp lệ (vd. mã PIN vừa được đặt lại): giữ tiến độ trong máy, nhắc nhập lại PIN
+function lostToken(){ token=null; try{ localStorage.removeItem(TOKEN_KEY); }catch(e){} clearTimeout(syncTimer); setSync('auth'); }
+function scheduleSync(){ if(!user||!token) return; clearTimeout(syncTimer); setSync('saving'); syncTimer=setTimeout(()=>sync(),700); }
 async function sync(keepalive){
-  if(!user) return;
+  if(!user||!token) return;
   clearTimeout(syncTimer);
   try{
-    const r=await api('PUT', userUrl(user), {progress, seen}, keepalive);
-    if(r.status===404){                                   // máy chủ chưa có (vd. dữ liệu bị xoá): tạo lại
-      const c=await api('POST','api/users',{name:user, progress, seen});
-      if(c.status!==201) throw new Error(c.status);
-      absorb(c.data);
-    } else if(r.status!==200) throw new Error(r.status);
-    else absorb(r.data);
-    setSync('ok');
+    const r=await api('PUT','api/me',{progress, seen}, keepalive);
+    if(r.status===401) return lostToken();
+    if(r.status!==200) throw new Error(r.status);
+    absorb(r.data); setSync('ok');
   }catch(e){ setSync('offline'); syncTimer=setTimeout(()=>sync(),15000); }
 }
 addEventListener('online', ()=>{ if(syncState==='offline') sync(); });
-document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden' && syncState!=='ok') sync(true); });
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden' && (syncState==='saving'||syncState==='offline')) sync(true); });
 // Mở trang: lấy tiến độ mới nhất trên máy chủ (bé có thể vừa học ở máy khác)
 async function refreshFromServer(){
-  if(!user) return;
+  if(!user || !token) return;
   try{
-    const r=await api('GET', userUrl(user));
-    if(r.status===200){ absorb(r.data); setSync('ok'); if($('.grid')) home(); }
-    if(r.status===200 || r.status===404) sync();          // gửi phần máy này có mà máy chủ chưa có
+    const r=await api('GET','api/me');
+    if(r.status===401){ lostToken(); return login(user); }
+    if(r.status===200){ absorb(r.data); setSync('ok'); if($('.grid')) home(); sync(); }
   }catch(e){ setSync('offline'); }
 }
 
-function login(){
+/* Màn hình đăng nhập: tên → (tên mới: đặt PIN) / (tên đã có: nhập PIN) / (hồ sơ cũ chưa có PIN: đặt PIN) */
+function login(prefill){
   stopAll(); FX.stop && FX.stop();
   document.documentElement.style.setProperty('--c','#FF8A5B');
-  const legacy = Object.keys(progress).length>0;          // tiến độ cũ trước khi có tính năng tên
+  const legacy = !user && Object.keys(progress).length>0;  // tiến độ cũ trước khi có tính năng tên
   $('#app').innerHTML=`
   <div class="login">
     <div class="owl big">🦉</div>
     <h1>Bé Vui Học <span>Tiếng Anh</span></h1>
-    <p class="hint">Nhập tên của con để lưu quá trình học. Sang máy khác, chỉ cần nhập đúng tên này là học tiếp được!</p>
+    <p class="hint">Nhập tên và mã PIN của con để lưu quá trình học. Sang máy khác, chỉ cần nhập đúng tên và mã PIN là học tiếp được!</p>
     <form id="lf" autocomplete="off" novalidate>
       <label for="nm">Tên của con</label>
       <input id="nm" maxlength="20" inputmode="latin" autocapitalize="off" spellcheck="false" placeholder="ví dụ: Bong2019">
       <div class="nmhelp" id="nh">Chỉ dùng chữ không dấu (a–z) và số, dài 3–20 ký tự, không có dấu cách.</div>
-      <button class="btn" id="go" type="submit">Bắt đầu học →</button>
+      <button class="btn" id="go" type="submit">Tiếp tục →</button>
     </form>
     <div id="lmsg"></div>
-    ${legacy?'<p class="hint small">💡 Tiến độ con đã học trên máy này sẽ được chuyển vào tên mới.</p>':''}
+    ${legacy?'<p class="hint small">💡 Tiến độ con đã học trên máy này sẽ được chuyển vào hồ sơ.</p>':''}
   </div>`;
-  const nm=$('#nm'), nh=$('#nh'), msg=$('#lmsg');
+  const nm=$('#nm'), nh=$('#nh'), msg=$('#lmsg'), form=$('#lf');
   const check=()=>{
     const v=nm.value, bad=v && !NAME_RE.test(v);
     nh.classList.toggle('bad', !!bad);
@@ -116,58 +122,94 @@ function login(){
       : v.length<3 ? '❌ Tên cần ít nhất 3 ký tự.' : '✅ Tên hợp lệ';
     return !bad && !!v;
   };
+  const resetName=()=>{ msg.innerHTML=''; form.style.display=''; nm.disabled=false; nm.select(); };
   nm.oninput=()=>{ check(); msg.innerHTML=''; };
-  nm.focus();
-  const busy=on=>{ $('#go').disabled=on; $('#go').textContent=on?'Đang kiểm tra…':'Bắt đầu học →'; };
+  const busy=(btn,on,label)=>{ btn.disabled=on; btn.textContent=on?'Đang kiểm tra…':label; };
+  const fail=()=>{ msg.insertAdjacentHTML('beforeend','<div class="lbox bad">📡 Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại nhé.</div>'); };
+  // Máy này đang giữ tiến độ của người khác thì không mang sang hồ sơ mới
+  const sameAsDevice = n => !user || user.toLowerCase()===n.toLowerCase();
   const enter=d=>{
-    user=d.name; try{ localStorage.setItem(USER_KEY,user); }catch(e){}
+    if(!sameAsDevice(d.name)){ progress={}; seen={}; }
+    user=d.name; token=d.token;
+    try{ localStorage.setItem(USER_KEY,user); localStorage.setItem(TOKEN_KEY,token); }catch(e){}
     absorb(d); setSync('ok'); sync(); home();
     toast(`👋 Chào ${user}! Tiến độ của con sẽ được lưu tự động.`);
   };
-  const fail=()=>{ msg.innerHTML='<div class="lbox bad">📡 Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại nhé.</div>'; busy(false); };
-  $('#lf').onsubmit=async e=>{
+
+  // Ô nhập PIN (mode: 'enter' nhập PIN | 'create' tên mới | 'claim' hồ sơ cũ chưa có PIN)
+  function pinStep(name, mode){
+    form.style.display='none';
+    const head = mode==='enter' ? `<div style="font-size:40px">🔑</div><b>Chào ${esc(name)}!</b> Nhập mã PIN 4 số của con:`
+      : mode==='create' ? `<div style="font-size:40px">✨</div><b>"${esc(name)}"</b> là tên mới! Đặt mã PIN 4 số để giữ hồ sơ của con — chỉ ai biết mã này mới vào được.`
+      : `<div style="font-size:40px">🔒</div>Hồ sơ <b>"${esc(name)}"</b> chưa có mã PIN. Nếu đây là hồ sơ của con, hãy đặt mã PIN 4 số để không ai khác dùng được.`;
+    const label = mode==='enter' ? 'Vào học →' : mode==='create' ? 'Tạo hồ sơ' : 'Đặt mã PIN';
+    msg.innerHTML=`<div class="lbox">${head}
+      <form id="pf" novalidate>
+        <input id="pin" class="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••" aria-label="Mã PIN">
+        ${mode!=='enter'?'<input id="pin2" class="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••" aria-label="Nhập lại mã PIN"><div class="nmhelp">Nhập lại mã PIN để chắc chắn</div>':''}
+        <label class="showpin"><input type="checkbox" id="sp"> 👁 Hiện mã PIN</label>
+        <div class="nmhelp" id="ph"></div>
+        <div class="row"><button type="button" class="btn ghost" id="back">← Đổi tên</button><button class="btn" id="pgo">${label}</button></div>
+      </form>
+      <p class="hint small">${mode==='enter'?'Quên mã PIN? Nhờ bố mẹ liên hệ người quản lý trang để đặt lại.':'💡 Bố mẹ ghi nhớ mã PIN giúp con nhé.'}</p></div>`;
+    const pin=$('#pin'), pin2=$('#pin2'), ph=$('#ph'), go=$('#pgo');
+    [pin,pin2].filter(Boolean).forEach(x=>x.oninput=()=>{ x.value=x.value.replace(/\D/g,'').slice(0,4); ph.textContent=''; ph.classList.remove('bad'); });
+    $('#sp').onchange=e=>[pin,pin2].filter(Boolean).forEach(x=>x.type=e.target.checked?'text':'password');
+    $('#back').onclick=resetName;
+    pin.focus();
+    const say=t=>{ ph.textContent=t; ph.classList.add('bad'); };
+    $('#pf').onsubmit=async e=>{
+      e.preventDefault();
+      if(!PIN_RE.test(pin.value)) return say('❌ Mã PIN gồm đúng 4 chữ số.');
+      if(pin2 && pin2.value!==pin.value) return say('❌ Hai lần nhập mã PIN chưa giống nhau.');
+      busy(go,true,label);
+      try{
+        const carry = sameAsDevice(name);            // mang tiến độ trong máy vào hồ sơ?
+        const r = mode==='enter' ? await api('POST','api/login',{name, pin:pin.value})
+          : mode==='create' ? await api('POST','api/users',{name, pin:pin.value, progress:carry?progress:{}, seen:carry?seen:{}})
+          : await api('POST', userUrl(name)+'/pin', {pin:pin.value});
+        busy(go,false,label);
+        const d=r.data||{};
+        if(r.status===200||r.status===201) return enter(d);
+        if(r.status===401){ pin.value=''; pin.focus(); return say(`❌ Mã PIN chưa đúng. Còn ${d.triesLeft} lần thử.`); }
+        if(r.status===423) return say(`⏳ Sai mã PIN quá nhiều lần. Thử lại sau ${Math.ceil((d.retryAfter||900)/60)} phút nhé.`);
+        if(r.status===409 && d.needPin) return pinStep(name,'claim');
+        if(r.status===409 && mode==='claim') return pinStep(name,'enter');      // vừa có người đặt PIN
+        if(r.status===409) return say('😮 Tên này vừa có người khác dùng mất rồi. Bấm "Đổi tên" để chọn tên khác nhé!');
+        say('❌ '+(d.error||'Có lỗi, thử lại nhé.'));
+      }catch(e){ busy(go,false,label); say('📡 Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại nhé.'); }
+    };
+  }
+
+  form.onsubmit=async e=>{
     e.preventDefault();
     if(!check()){ nm.focus(); return; }
-    const name=nm.value; busy(true);
+    const name=nm.value, go=$('#go'); busy(go,true,'Tiếp tục →'); msg.innerHTML='';
     try{
       const r=await api('GET', userUrl(name));
-      busy(false);
-      if(r.status===200){
-        const d=r.data, n=LESSONS.filter((_,i)=>(d.progress||{})[pk(i,1)]>0).length;
-        msg.innerHTML=`<div class="lbox"><div style="font-size:40px">🎒</div><b>Tên "${esc(d.name)}" đã có người học</b> — đã qua ${n}/${LESSONS.length} bài.
-          <p class="hint" style="margin:6px 0 0">Đây có đúng là con không?</p>
-          <div class="row"><button class="btn ghost" id="no">Không phải, đổi tên khác</button><button class="btn" id="yes">Đúng là con — học tiếp</button></div></div>`;
-        $('#no').onclick=()=>{ msg.innerHTML=''; nm.select(); };
-        $('#yes').onclick=()=>enter(d);
-      } else if(r.status===404){
-        msg.innerHTML=`<div class="lbox"><div style="font-size:40px">✨</div><b>"${esc(name)}"</b> là tên mới. Tạo hồ sơ cho con nhé?
-          <div class="row"><button class="btn ghost" id="no">Sửa lại tên</button><button class="btn" id="yes">Tạo hồ sơ</button></div></div>`;
-        $('#no').onclick=()=>{ msg.innerHTML=''; nm.select(); };
-        $('#yes').onclick=async()=>{
-          try{
-            const c=await api('POST','api/users',{name, progress, seen});
-            if(c.status===201) enter(c.data);
-            else if(c.status===409) msg.innerHTML='<div class="lbox bad">😮 Tên này vừa có người khác dùng mất rồi. Chọn tên khác nhé!</div>';
-            else msg.innerHTML=`<div class="lbox bad">❌ ${esc((c.data&&c.data.error)||'Có lỗi, thử lại nhé.')}</div>`;
-          }catch(e){ fail(); }
-        };
-      } else msg.innerHTML=`<div class="lbox bad">❌ ${esc((r.data&&r.data.error)||'Có lỗi, thử lại nhé.')}</div>`;
-    }catch(e){ fail(); }
+      busy(go,false,'Tiếp tục →');
+      if(r.status===200) pinStep(r.data.name, r.data.hasPin?'enter':'claim');
+      else if(r.status===404) pinStep(name,'create');
+      else msg.innerHTML=`<div class="lbox bad">❌ ${esc((r.data&&r.data.error)||'Có lỗi, thử lại nhé.')}</div>`;
+    }catch(e){ busy(go,false,'Tiếp tục →'); fail(); }
   };
+  if(prefill && NAME_RE.test(prefill)){ nm.value=prefill; check(); form.requestSubmit ? form.requestSubmit() : form.onsubmit(new Event('submit')); }
+  else nm.focus();
   window.scrollTo(0,0);
 }
 function logout(){
   const m=document.createElement('div'); m.className='modal';
   m.innerHTML=`<div class="box"><div style="font-size:50px">👋</div><h3>Đổi người học?</h3>
-    <p class="hint">Tiến độ của <b>${esc(user)}</b> vẫn được lưu trên máy chủ. Lần sau nhập lại tên <b>${esc(user)}</b> để học tiếp.</p>
-    ${syncState!=='ok'?'<p class="hint" style="color:var(--bad)">⚠️ Một phần tiến độ chưa lưu được lên máy chủ (đang mất mạng) và sẽ mất nếu đổi người lúc này.</p>':''}
+    <p class="hint">Tiến độ của <b>${esc(user)}</b> vẫn được lưu trên máy chủ. Lần sau nhập lại tên <b>${esc(user)}</b> và mã PIN để học tiếp.</p>
+    ${syncState!=='ok'?'<p class="hint" style="color:var(--bad)">⚠️ Một phần tiến độ chưa lưu được lên máy chủ và sẽ mất nếu đổi người lúc này.</p>':''}
     <div class="row"><button class="btn ghost" id="no">Ở lại</button><button class="btn" id="yes">Đổi người học</button></div></div>`;
   document.body.appendChild(m);
   m.querySelector('#no').onclick=()=>m.remove();
   m.querySelector('#yes').onclick=async()=>{
-    if(syncState!=='ok') await sync();
-    user=null; progress={}; seen={}; clearTimeout(syncTimer); setSync('ok');
-    try{ [USER_KEY,KEY,SEEN_KEY].forEach(k=>localStorage.removeItem(k)); }catch(e){}
+    if(syncState==='saving'||syncState==='offline') await sync();
+    try{ if(token) await api('POST','api/logout'); }catch(e){}     // huỷ vé của máy này
+    user=null; token=null; progress={}; seen={}; clearTimeout(syncTimer); setSync('ok');
+    try{ [USER_KEY,TOKEN_KEY,KEY,SEEN_KEY].forEach(k=>localStorage.removeItem(k)); }catch(e){}
     m.remove(); login();
   };
 }
@@ -355,7 +397,8 @@ function home(){
   $('#app').innerHTML = `
   <div class="top">
     <div class="logo"><div class="owl">🦉</div><div><h1>Bé Vui Học <span>Tiếng Anh</span></h1><p>Học mỗi ngày một chút — vui ơi là vui!</p></div></div>
-    <div class="who"><span class="avatar">🧒</span><div><div class="hint" style="margin:0">Người học</div><b>${esc(user||'')}</b></div><button class="link" id="switch">Đổi người</button></div>
+    <div class="who"><span class="avatar">${avatar(user||'').e}</span><div><div class="hint" style="margin:0">Người học</div><b>${esc(user||'')}</b></div><button class="link" id="switch">Đổi người</button></div>
+    <button class="fame-btn" id="fame"><span class="cup">🏆</span><span class="t">Bảng vinh danh<small id="myrank">${rankLabel(lastRank)}</small></span></button>
     <div class="prog"><div class="pct"><b>📊 Hoàn thành ${pct}%</b><span>${lvDone}/${lvTotal} cấp đã qua</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>
   </div>
   <div class="hello"><div style="font-size:40px">🦉</div><div class="bubble">${
@@ -382,7 +425,9 @@ function home(){
       <div class="state">${state}</div>
     </button>`;}).join('')}</div>
   <div class="foot"><span>${syncBadge()} · Học trên máy khác: nhập tên <b>${esc(user||'')}</b>. Bật loa để nghe phát âm 🔊</span><button class="link" id="reset">Xoá tiến độ</button></div>`;
-  $('#switch').onclick=logout;
+  $('#switch').onclick=logout; wireSync();
+  $('#fame').onclick=()=>fame('all');
+  loadMyRank();
   document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{
     const i=+b.dataset.open;
     if(!unlocked(i)){ b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); toast(`🔒 Con cần qua bài kiểm tra Bài ${i} trước nhé!`); return; }
@@ -397,12 +442,80 @@ function home(){
       progress={}; seen={};
       try{ localStorage.setItem(KEY,'{}'); localStorage.removeItem(SEEN_KEY); }catch(e){}
       m.remove(); home();
-      try{ const r=await api('PUT', userUrl(user), {progress:{}, seen:{}, replace:true}); setSync(r.status===200?'ok':'offline'); }
+      try{ const r=await api('PUT','api/me', {progress:{}, seen:{}, replace:true}); if(r.status===401) lostToken(); else setSync(r.status===200?'ok':'offline'); }
       catch(e){ setSync('offline'); toast('⚠️ Chưa xoá được trên máy chủ — kiểm tra mạng rồi thử lại'); }
     };
   };
   stopAll();
   window.scrollTo(0,0);
+}
+
+/* ================== BẢNG VINH DANH ==================
+   Top 10 theo tổng số sao (Mọi lúc) hoặc theo số sao giành được từ thứ Hai (Tuần này).
+   Bằng điểm thì ai qua nhiều cấp hơn đứng trước. Dữ liệu từ GET api/leaderboard. */
+const AVATARS=['🐶','🐱','🐰','🐼','🦊','🐯','🐸','🐵','🐻','🐨','🦁','🐷','🐥','🦄','🐙','🐳'];
+const AVBG=['#FFE9D6','#FFF4CC','#FDE7F3','#E6F0FF','#FFE3D6','#FFF1CC','#E3F7E8','#F6E8DA','#F1E4D8','#E8EEF2','#FFF1CC','#FDE7F3','#FFF7C2','#EFE6FF','#E6F0FF','#E0F4FF'];
+// Mỗi tên luôn được cùng một con vật (tính từ chữ trong tên, không phân biệt hoa thường)
+function avatar(name){ let h=0; for(const ch of String(name).toLowerCase()) h=(h*31+ch.charCodeAt(0))>>>0; return {e:AVATARS[h%AVATARS.length], bg:AVBG[(h>>4)%AVBG.length]}; }
+let lastRank;   // undefined: chưa biết; null: chưa lên bảng; số: hạng
+const rankLabel = r => r===undefined ? 'Xem các bạn giỏi nhất' : r ? `Con đang hạng ${r}` : 'Có sao là lên bảng!';
+async function loadMyRank(){
+  try{
+    const r=await api('GET','api/leaderboard?period=all');
+    if(r.status!==200 || !r.data.me) return;
+    lastRank=r.data.me.rank; const el=$('#myrank'); if(el) el.textContent=rankLabel(lastRank);
+  }catch(e){}
+}
+async function fame(period){
+  stopAll(); FX.stop && FX.stop();
+  document.documentElement.style.setProperty('--c','#FF8A5B');
+  $('#app').innerHTML=`
+  <div class="lhead"><button class="back" id="back" aria-label="Về trang chủ">⬅</button>
+    <div><h2>🏆 Bảng vinh danh</h2><div class="sub">Những bạn nhỏ học chăm và giỏi nhất</div></div></div>
+  <div class="panel fame">
+    <div class="tabs" role="tablist">
+      <button class="tab ${period==='all'?'on':''}" role="tab" aria-selected="${period==='all'}" data-p="all">⭐ Mọi lúc</button>
+      <button class="tab ${period==='week'?'on':''}" role="tab" aria-selected="${period==='week'}" data-p="week">🔥 Tuần này</button>
+    </div>
+    <p class="hint">${period==='week'?'Xếp theo số sao giành được từ thứ Hai tuần này. Bảng tuần làm mới mỗi thứ Hai, nên bạn mới học cũng có cơ hội đứng đầu.':'Xếp theo tổng số sao từ trước đến nay.'}</p>
+    <div id="fbody"><p class="hint center">⏳ Đang tải bảng vinh danh…</p></div>
+  </div>`;
+  $('#back').onclick=home;
+  document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>fame(b.dataset.p));
+  window.scrollTo(0,0);
+  let d;
+  try{ const r=await api('GET','api/leaderboard?period='+period); if(r.status!==200) throw 0; d=r.data; }
+  catch(e){ const fb=$('#fbody'); if(fb) fb.innerHTML='<div class="lbox bad">📡 Không tải được bảng vinh danh. Kiểm tra mạng rồi thử lại nhé.</div>'; return; }
+  const fb=$('#fbody'); if(!fb || !$('.fame')) return;          // bé đã rời trang
+  if(period==='all' && d.me){ lastRank=d.me.rank; }
+  const pts = p => period==='week' ? `+${p.score} ⭐` : `${p.score} ⭐`;
+  const me = (user||'').toLowerCase();
+  const pct = p => Math.round(p.levels/LESSONS.reduce((a,_,i)=>a+nLevels(i),0)*100);
+  if(!d.top.length){
+    fb.innerHTML=`<div class="lbox"><div style="font-size:44px">🌱</div><b>${period==='week'?'Tuần này chưa có bạn nào giành sao.':'Chưa có bạn nào trên bảng.'}</b><br>Qua một bài kiểm tra để là người đầu tiên được vinh danh nhé!</div>`;
+    return;
+  }
+  const place=(p,cls)=>{ if(!p) return '<div class="place"></div>'; const a=avatar(p.name);
+    const isMe=p.name.toLowerCase()===me;
+    return `<div class="place ${cls} ${isMe?'me':''}"><div class="crown">${p.rank===1?'👑':''}</div>
+      <div class="av" style="--avbg:${a.bg}">${a.e}</div>
+      <div class="nm" title="${esc(p.name)}${isMe?' (con)':''}">${esc(p.name)}</div>
+      <div class="st">${pts(p)}</div><div class="block">${p.rank}</div></div>`; };
+  const [a,b,c]=d.top;
+  const m=d.me;
+  const mine = !m ? '' : m.rank ? `<div class="mine"><div class="big">${m.rank<=3?'🥳':'💪'}</div><div class="txt"><b>Con đang ở hạng ${m.rank}${period==='week'?' tuần này':''}</b><br>
+      <span class="goal">${m.ahead?`Thêm ${m.ahead.score-m.score+1} ⭐ nữa là vượt ${esc(m.ahead.name)} để lên hạng ${m.rank-1}!`:'Con đang dẫn đầu, giữ vững nhé!'}</span></div></div>`
+    : `<div class="mine"><div class="big">🌱</div><div class="txt"><b>Con chưa có tên trên bảng${period==='week'?' tuần này':''}</b><br><span class="goal">Qua một bài kiểm tra để giành sao và lên bảng nhé!</span></div></div>`;
+  fb.innerHTML=`
+    <div class="podium">${place(b,'p2')}${place(a,'p1')}${place(c,'p3')}</div>
+    ${mine}
+    <div class="rlist">${d.top.slice(3).map(p=>{ const av=avatar(p.name), isMe=p.name.toLowerCase()===me;
+      return `<div class="rrow ${isMe?'me':''}"><div class="rk">${p.rank}</div><div class="av" style="--avbg:${av.bg}">${av.e}</div>
+        <div class="rwho"><b>${esc(p.name)}${isMe?' (con)':''}</b><div class="rbar"><i style="width:${pct(p)}%"></i></div>
+          <div class="badges"><span class="pc">Hoàn thành ${pct(p)}%</span>${p.badges.map(x=>`<span class="badge">${esc(x)}</span>`).join('')}</div></div>
+        <div class="sc">${pts(p)}<small>${p.levels} cấp</small></div></div>`; }).join('')}</div>
+    ${a.badges.length||(b&&b.badges.length)||(c&&c.badges.length)?`<div class="topbadges">${[a,b,c].filter(Boolean).filter(p=>p.badges.length).map(p=>`<span><b>${esc(p.name)}</b> ${p.badges.map(x=>`<span class="badge">${esc(x)}</span>`).join(' ')}</span>`).join('')}</div>`:''}
+    <p class="hint center small">Bằng điểm thì ai qua nhiều cấp hơn đứng trước. ${d.total>10?`Có ${d.total} bạn trên bảng, hiện 10 bạn đứng đầu.`:''}</p>`;
 }
 
 /* ================== BÀI HỌC ================== */
@@ -634,4 +747,6 @@ function testResult(i,lvl,sc,n){
 }
 
 // Chưa có tên thì bắt buộc nhập tên trước khi học
-if(user && NAME_RE.test(user)){ home(); refreshFromServer(); } else { user=null; login(); }
+if(user && NAME_RE.test(user) && token){ home(); refreshFromServer(); }
+else if(user && NAME_RE.test(user)) login(user);      // đã có tên từ trước khi có mã PIN → nhập / đặt PIN
+else { user=null; login(); }

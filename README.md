@@ -5,12 +5,20 @@ Bé phải qua bài kiểm tra (đúng ≥ 12/15 câu) mới mở được bài 
 Qua Cấp 1 của một bài sẽ mở **Cấp 2**, qua Cấp 2 mở **Cấp 3** — cùng chủ đề, nội dung mới và khó dần. Mỗi lần làm lại bài kiểm tra,
 ứng dụng ưu tiên những câu bé chưa gặp.
 
-**Lưu tiến độ theo tên:** lần đầu vào, bé phải nhập tên (chỉ chữ không dấu và số, 3–20 ký tự, không trùng,
-không phân biệt hoa thường). Tiến độ được lưu trên máy chủ theo tên này, nên sang máy khác chỉ cần nhập
-đúng tên là học tiếp. Trình duyệt vẫn giữ một bản sao để học được khi mất mạng; có mạng lại thì tự gửi lên.
+**Lưu tiến độ theo tên + mã PIN:** lần đầu vào, bé nhập tên (chỉ chữ không dấu và số, 3–20 ký tự, không trùng,
+không phân biệt hoa thường) và đặt mã PIN 4 số. Tiến độ được lưu trên máy chủ, nên sang máy khác chỉ cần nhập
+đúng tên và mã PIN là học tiếp. Mã PIN chỉ lưu dạng băm; sai 5 lần thì hồ sơ bị khoá 15 phút. Trình duyệt vẫn giữ một bản sao để học được khi mất mạng; có mạng lại thì tự gửi lên.
 Máy chủ gộp theo số sao lớn nhất, nên học song song trên hai máy cũng không mất tiến độ.
 
-Lưu ý: không có mật khẩu — ai nhập đúng tên thì vào được hồ sơ đó (phù hợp cho gia đình / lớp học).
+**Bảng vinh danh:** nút 🏆 trên trang chủ mở Top 10 các bé, có hai tab: *Mọi lúc* (tổng số sao) và
+*Tuần này* (số sao giành được từ thứ Hai, giờ Việt Nam). Bằng điểm thì ai qua nhiều cấp hơn đứng trước.
+Huy hiệu: 🔥 học từ 3 ngày liền, 👑 từ 5 cấp 3 sao. Bảng chỉ hiện tên, ảnh con vật (chọn tự động theo tên),
+số sao và số cấp.
+
+Bé quên mã PIN: bố mẹ / người quản lý chạy trên server
+`sudo /opt/en-learn-api/admin.sh --reset-pin <tên>` (lần sau vào, bé đặt PIN mới; tiến độ giữ nguyên).
+Xem danh sách hồ sơ: `sudo /opt/en-learn-api/admin.sh --list-users`. Không chạy `app.py` trực tiếp bằng root
+trên server vì file dữ liệu sẽ bị đổi chủ sở hữu.
 
 Gồm trang web tĩnh (HTML/CSS/JS + mp3) và một máy chủ nhỏ `server/app.py` (chỉ dùng thư viện có sẵn
 của Python, dữ liệu trong SQLite).
@@ -30,7 +38,7 @@ en-learn/
 ├── images/               Ảnh minh hoạ (tuỳ chọn, mặc định dùng emoji)
 ├── server/app.py         Máy chủ lưu tiến độ (API /api/users/<tên>, SQLite)
 ├── server/backup.py      Sao lưu cơ sở dữ liệu
-├── deploy/               File cài máy chủ lên server (systemd, nginx) – deploy.sh tự dùng
+├── deploy/               File cài máy chủ lên server (systemd, nginx, admin.sh) – deploy.sh tự dùng
 ├── deploy.sh             Deploy lên en.duyetnt.com
 ├── tools/                Công cụ tạo file âm thanh (không deploy)
 ├── Dockerfile, nginx.conf, docker-compose.yml

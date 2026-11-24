@@ -5,7 +5,10 @@ Description=Be Vui Hoc Tieng Anh - sao luu tien do
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/python3 /opt/en-learn-api/backup.py /var/lib/en-learn/en-learn.db /var/lib/en-learn/backups 14
+# Dùng CHUNG user với en-learn-api: hai user khác nhau cùng StateDirectory làm systemd đổi chủ sở hữu file
+# dữ liệu, khiến máy chủ không ghi được sau khi khởi động lại.
 DynamicUser=yes
+User=en-learn-api
 StateDirectory=en-learn
 ProtectSystem=strict
 ProtectHome=yes
