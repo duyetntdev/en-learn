@@ -13,8 +13,14 @@ const lv = (i,n) => n===1 ? LESSONS[i] : Object.assign({}, LESSONS[i], EXTRA[n-2
 const pk = (i,n) => n===1 ? String(i) : i+'-'+n;
 const starsOf = (i,n) => progress[pk(i,n)]||0;
 const passed = (i,n=1) => starsOf(i,n) > 0;
-const unlocked = i => i===0 || passed(i-1);
-const lvUnlocked = (i,n) => n===1 ? unlocked(i) : passed(i,n-1);
+// Bé được tự chọn bài và cấp bất kỳ. Đổi thành false để quay lại kiểu khoá: qua bài trước mới mở bài sau.
+const FREE_CHOICE = true;
+const unlocked = i => FREE_CHOICE || i===0 || passed(i-1);
+const lvUnlocked = (i,n) => FREE_CHOICE || (n===1 ? unlocked(i) : passed(i,n-1));
+// Phần trăm hoàn thành: mỗi bài chiếm phần bằng nhau, qua mỗi cấp được 1/số cấp của bài đó
+const lessonDone = i => { let c=0; for(let m=1;m<=nLevels(i);m++) if(passed(i,m)) c++; return c; };
+const lessonPct = i => Math.round(lessonDone(i)/nLevels(i)*100);
+const totalPct = () => Math.round(LESSONS.reduce((a,_,i)=>a+lessonDone(i)/nLevels(i),0)/LESSONS.length*100);
 // Mở bài: vào cấp cao nhất đã mở (qua Cấp 1 thì vào thẳng Cấp 2, qua Cấp 2 thì vào Cấp 3 – nội dung mới)
 const startLevel = i => { let n=1; while(n<nLevels(i) && passed(i,n)) n++; return n; };
 
@@ -344,33 +350,35 @@ function home(){
   document.documentElement.style.setProperty('--c','#FF8A5B');
   const done = LESSONS.filter((_,i)=>passed(i)).length;
   const cur = LESSONS.findIndex((_,i)=>!passed(i));
-  // Cấp nâng cao (từ Cấp 2 trở lên) đã qua / tổng số
-  const advTotal = LESSONS.reduce((a,_,i)=>a+nLevels(i)-1,0);
-  const advDone = LESSONS.reduce((a,_,i)=>{ let c=0; for(let m=2;m<=nLevels(i);m++) if(passed(i,m)) c++; return a+c; },0);
+  const pct = totalPct();
+  const lvTotal = LESSONS.reduce((a,_,i)=>a+nLevels(i),0), lvDone = LESSONS.reduce((a,_,i)=>a+lessonDone(i),0);
   $('#app').innerHTML = `
   <div class="top">
     <div class="logo"><div class="owl">🦉</div><div><h1>Bé Vui Học <span>Tiếng Anh</span></h1><p>Học mỗi ngày một chút — vui ơi là vui!</p></div></div>
     <div class="who"><span class="avatar">🧒</span><div><div class="hint" style="margin:0">Người học</div><b>${esc(user||'')}</b></div><button class="link" id="switch">Đổi người</button></div>
-    <div class="prog"><b>🏅 ${done}/${LESSONS.length} bài đã qua${advDone?` · 🌟 ${advDone}/${advTotal} cấp nâng cao`:''}</b><div class="bar"><i style="width:${done/LESSONS.length*100}%"></i></div></div>
+    <div class="prog"><div class="pct"><b>📊 Hoàn thành ${pct}%</b><span>${lvDone}/${lvTotal} cấp đã qua</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>
   </div>
   <div class="hello"><div style="font-size:40px">🦉</div><div class="bubble">${
-    done===LESSONS.length ? (LESSONS.every((_,i)=>passed(i,nLevels(i))) ? 'Tuyệt vời! Con đã qua tất cả các cấp của mọi bài! 🎓👑 Làm lại để gặp câu hỏi mới nhé.' : 'Tuyệt vời! Con đã qua tất cả bài Cấp 1! 🎓 Bấm vào một bài để học <b>cấp tiếp theo</b> với nội dung mới nhé.')
-    : done===0 ? 'Xin chào! Mình là cú Ollie. Bắt đầu với <b>Bài 1</b> nhé! Làm đúng bài kiểm tra để mở khoá bài tiếp theo 🔓'
-    : `Giỏi quá! Tiếp tục với <b>Bài ${cur+1}: ${LESSONS[cur].title}</b> nào!`}</div></div>
+    pct===100 ? 'Tuyệt vời! Con đã hoàn thành 100% — qua tất cả các cấp của mọi bài! 🎓👑 Làm lại để gặp câu hỏi mới nhé.'
+    : lvDone===0 ? 'Xin chào! Mình là cú Ollie. Con thích bài nào thì bấm vào bài đó để học nhé! Chưa biết chọn gì thì bắt đầu với <b>Bài 1</b> 😊'
+    : done===LESSONS.length ? `Giỏi quá! Con đã hoàn thành ${pct}%. Bấm vào một bài để học <b>cấp tiếp theo</b> với nội dung mới nhé.`
+    : `Giỏi quá! Con đã hoàn thành ${pct}%. Gợi ý: <b>Bài ${cur+1}: ${LESSONS[cur].title}</b> — hoặc chọn bài con thích!`}</div></div>
   <div class="grid">${LESSONS.map((L,i)=>{
     const lock=!unlocked(i), st=starsOf(i,1), N=nLevels(i), nx=startLevel(i);
+    const lp = lessonPct(i);
     const state = lock ? 'Qua bài '+i+' để mở khoá'
-      : !st ? '▶ Bắt đầu học'
-      : !passed(i,nx) ? `🆕 Cấp ${nx} đã mở — học tiếp`
-      : '✅ Đã qua mọi cấp — làm lại với câu hỏi mới';
+      : !lessonDone(i) ? '▶ Bắt đầu học'
+      : !passed(i,nx) ? `▶ Học tiếp Cấp ${nx}`
+      : '✅ Hoàn thành — làm lại với câu hỏi mới';
     const lvTags = Array.from({length:N},(_,k)=>k+1).map(m=>{
       const s2=starsOf(i,m), open=lvUnlocked(i,m);
-      return `<span class="lvtag ${!s2&&open?'new':''} ${open?'':'off'}">Cấp ${m} ${s2?stars(s2):open?'🆕':'🔒'}</span>`; }).join('');
+      return `<span class="lvtag ${s2?'':'todo'} ${open?'':'off'}">Cấp ${m} ${s2?stars(s2):open?'':'🔒'}</span>`; }).join('');
     return `<button class="lcard ${lock?'locked':''} ${i===cur?'current':''}" style="--c:${L.color}" data-open="${i}" aria-label="Bài ${i+1} ${L.title}${lock?' (đang khoá)':''}">
       ${lock?'<span class="lock">🔒</span>':st?`<span class="stars">${stars(st)}</span>`:''}
       <div class="ic">${L.icon}</div>
       <div class="num">Bài ${i+1}</div><h3>${L.title}</h3><div class="vi">${L.vi}</div>
-      ${N>1&&st?`<div class="lvrow">${lvTags}</div>`:''}
+      ${N>1&&(FREE_CHOICE||st)?`<div class="lvrow">${lvTags}</div>`:''}
+      <div class="lpct"><div class="lbar"><i style="width:${lp}%"></i></div><span>${lp}%</span></div>
       <div class="state">${state}</div>
     </button>`;}).join('')}</div>
   <div class="foot"><span>${syncBadge()} · Học trên máy khác: nhập tên <b>${esc(user||'')}</b>. Bật loa để nghe phát âm 🔊</span><button class="link" id="reset">Xoá tiến độ</button></div>`;
@@ -382,7 +390,7 @@ function home(){
   });
   $('#reset').onclick=()=>{
     const m=document.createElement('div'); m.className='modal';
-    m.innerHTML=`<div class="box"><div style="font-size:50px">🗑️</div><h3>Xoá toàn bộ tiến độ?</h3><p class="hint">Tất cả bài của <b>${esc(user||'')}</b> sẽ bị khoá lại trừ Bài 1, trên mọi thiết bị.</p><div class="row"><button class="btn ghost" id="no">Không</button><button class="btn" id="yes" style="--c:#F0554A">Xoá</button></div></div>`;
+    m.innerHTML=`<div class="box"><div style="font-size:50px">🗑️</div><h3>Xoá toàn bộ tiến độ?</h3><p class="hint">Toàn bộ sao và tiến độ của <b>${esc(user||'')}</b> sẽ bị xoá (về 0%), trên mọi thiết bị.</p><div class="row"><button class="btn ghost" id="no">Không</button><button class="btn" id="yes" style="--c:#F0554A">Xoá</button></div></div>`;
     document.body.appendChild(m);
     m.querySelector('#no').onclick=()=>m.remove();
     m.querySelector('#yes').onclick=async()=>{
@@ -406,7 +414,7 @@ function lesson(i,tab,n=1){
   $('#app').innerHTML=`
   <div class="lhead"><button class="back" id="back" aria-label="Về trang chủ">⬅</button><div class="ic">${L.icon}</div>
     <div><div class="sub">Bài ${i+1} · ${N>1?'Cấp '+n+' · ':''}${L.vi} ${st?'· '+stars(st):''}</div><h2>${L.title}</h2></div></div>
-  ${N>1?`<div class="lvsw">${Array.from({length:N},(_,k)=>k+1).map(m=>`<button class="lvbtn ${m===n?'on':''} ${lvUnlocked(i,m)?'':'locked'}" data-lv="${m}">Cấp ${m} ${!lvUnlocked(i,m)?'🔒':starsOf(i,m)?stars(starsOf(i,m)):m>1?'🆕':''}</button>`).join('')}</div>`:''}
+  ${N>1?`<div class="lvsw">${Array.from({length:N},(_,k)=>k+1).map(m=>`<button class="lvbtn ${m===n?'on':''} ${lvUnlocked(i,m)?'':'locked'}" data-lv="${m}">Cấp ${m} ${!lvUnlocked(i,m)?'🔒':starsOf(i,m)?stars(starsOf(i,m)):''}</button>`).join('')}</div>`:''}
   <div class="tabs">${TABS.map(([k,t])=>`<button class="tab ${k===tab?'on':''}" data-tab="${k}">${t}</button>`).join('')}</div>
   <div class="panel" id="panel"></div>`;
   $('#back').onclick=home;
@@ -467,7 +475,8 @@ function lesson(i,tab,n=1){
     start();
   }
   if(tab==='test'){
-    const unlockMsg = n===1 ? (N>1?'🔓 Qua bài để mở bài tiếp theo và Cấp 2':'🔓 Qua bài để mở bài tiếp theo') : n<N ? `🔓 Qua bài để mở Cấp ${n+1}` : '👑 Thử thách cấp cao nhất';
+    const unlockMsg = FREE_CHOICE ? (n<N ? `🎯 Qua bài để hoàn thành Cấp ${n}` : '👑 Thử thách cấp cao nhất')
+      : n===1 ? (N>1?'🔓 Qua bài để mở bài tiếp theo và Cấp 2':'🔓 Qua bài để mở bài tiếp theo') : n<N ? `🔓 Qua bài để mở Cấp ${n+1}` : '👑 Thử thách cấp cao nhất';
     P.innerHTML=`<div class="testintro"><div class="big">🏆</div><h3>Bài kiểm tra Bài ${i+1}${N>1?' · Cấp '+n:''}</h3>
       <p class="hint">Gồm từ vựng, nghe, ngữ pháp, sắp xếp câu và hội thoại.</p>
       <div><span class="pill">📝 ${TEST_N} câu</span><span class="pill">✅ Cần đúng ${PASS} câu</span><span class="pill">${unlockMsg}</span></div>
@@ -604,6 +613,8 @@ function testResult(i,lvl,sc,n){
   if(ok){ progress[key]=Math.max(progress[key]||0,st); save(); celebrate(lv(i,lvl), st+lvl-1); }   // sức mạnh 1–5
   const last=i===LESSONS.length-1;
   const unlockMsg = !first ? 'Làm tốt lắm! Lần sau làm lại sẽ có câu hỏi mới 🆕'
+    : FREE_CHOICE ? (hasNext ? `✅ Hoàn thành Cấp ${lvl}! Thử thách tiếp theo: <b>Cấp ${lvl+1}</b>` : `👑 Con đã chinh phục cấp cao nhất của bài ${LESSONS[i].title}!`)
+      + `<br>📊 Con đã hoàn thành <b>${totalPct()}%</b> chương trình`
     : lvl===1 ? [hasNext?`🆕 Đã mở <b>Cấp 2</b> của bài này`:'', last?'':`🔓 Đã mở khoá Bài ${i+2}: ${LESSONS[i+1].title}`].filter(Boolean).join('<br>') || 'Con đã hoàn thành tất cả các bài học! 🎓'
     : hasNext ? `🌟 Con đã chinh phục Cấp ${lvl}!<br>🆕 Đã mở <b>Cấp ${lvl+1}</b> của bài này`
     : `👑 Con đã chinh phục cấp cao nhất của bài ${LESSONS[i].title}!`;

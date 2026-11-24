@@ -159,6 +159,13 @@ button:focus-visible{outline:3px solid var(--c);outline-offset:3px}
 .lvrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
 .lvtag{font-size:12px;font-weight:800;padding:3px 8px;border-radius:99px;background:color-mix(in srgb,var(--c) 14%,white);color:var(--ink);white-space:nowrap}
 .lvtag.new{background:#FFF4CC}
+.lvtag.todo{background:#F3EAD9;color:var(--muted)}
+.lpct{display:flex;align-items:center;gap:8px;margin-top:6px}
+.lpct .lbar{flex:1;height:8px;border-radius:99px;background:#F3EAD9;overflow:hidden}
+.lpct .lbar i{display:block;height:100%;background:var(--c);border-radius:99px;transition:width .5s}
+.lpct span{font-size:13px;font-weight:800;color:var(--c);min-width:36px;text-align:right}
+.prog .pct{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.prog .pct span{font-size:13px;font-weight:800;color:var(--muted)}
 .lvtag.off{opacity:.55}
 .lvsw{display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap}
 .lvbtn{padding:8px 16px;border-radius:99px;background:var(--card);border:3px solid color-mix(in srgb,var(--c) 30%,white);font-weight:800;font-size:15px}
