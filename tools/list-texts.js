@@ -44,4 +44,13 @@ for (const V of ctx.VIRTUES) {
   V.orders.forEach(o => add(o[0]));
   add(V.pledge[0]);
 }
+// Trò chơi Nhà thám hiểm thiên tài (js/explore-data.js)
+const xctx = {};
+vm.runInNewContext(read('explore-data.js') + '\nthis.EXPEDITIONS = EXPEDITIONS;', xctx);
+add('What comes next?'); add('How many can you count?');
+for (const E of xctx.EXPEDITIONS) {
+  E.words.forEach(w => add(w[0]));
+  E.facts.forEach(f => { add(f[0]); add(f[2]); f[3].forEach(o => add(o)); });
+  add(E.odd[0]); add(E.odd[2][0]); E.odd[3].forEach(o => add(o[0]));
+}
 console.log(JSON.stringify([...out.values()], null, 1));

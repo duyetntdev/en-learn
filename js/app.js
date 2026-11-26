@@ -526,6 +526,7 @@ function home(){
     <button class="fame-btn" id="fame"><span class="cup">🏆</span><span class="t">Bảng vinh danh<small id="myrank">${rankLabel(lastRank)}</small></span></button>
     ${typeof castle==='function'?`<button class="fame-btn castle-btn" id="castle"><span class="cup">🏰</span><span class="t">Giải cứu công chúa<small>${castleLabel()}</small></span></button>`:''}
     ${typeof treasure==='function'?`<button class="fame-btn treasure-btn" id="treasure"><span class="cup">🗺️</span><span class="t">Đi tìm kho báu<small>${treasureLabel()}</small></span></button>`:''}
+    ${typeof explore==='function'?`<button class="fame-btn explore-btn" id="explore"><span class="cup">🧭</span><span class="t">Nhà thám hiểm thiên tài<small>${exploreLabel()}</small></span></button>`:''}
     <div class="prog"><div class="pct"><b>📊 Hoàn thành ${pct}%</b><span>${lvDone}/${lvTotal} level đã qua</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>
   </div>
   <div class="hello"><div style="font-size:40px">🦉</div><div class="bubble">${
@@ -567,6 +568,7 @@ function homeWire(){
   $('#fame').onclick=()=>fame('all');
   const cb=$('#castle'); if(cb) cb.onclick=()=>castle();
   const tb=$('#treasure'); if(tb) tb.onclick=()=>treasure();
+  const xb=$('#explore'); if(xb) xb.onclick=()=>explore();
   loadMyRank();
   document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{
     const i=+b.dataset.open;

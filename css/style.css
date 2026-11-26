@@ -405,18 +405,18 @@ button:focus-visible{outline:3px solid var(--c);outline-offset:3px}
   .itxt b{font-size:18px}.qprompt .situ{font-size:20px}.pbtn{font-size:20px}.cname{font-size:24px}
 }
 /* Hiệu ứng cho 2 nút trò chơi ở trang chủ: vệt sáng lướt qua, biểu tượng nhún/lắc, lấp lánh ở góc */
-.castle-btn,.treasure-btn{position:relative;overflow:hidden;isolation:isolate;transition:transform .15s}
-.castle-btn::after,.treasure-btn::after{content:'';position:absolute;inset:-20% auto -20% -60%;width:45%;z-index:-1;pointer-events:none;
+.castle-btn,.treasure-btn,.explore-btn{position:relative;overflow:hidden;isolation:isolate;transition:transform .15s}
+.castle-btn::after,.treasure-btn::after,.explore-btn::after{content:'';position:absolute;inset:-20% auto -20% -60%;width:45%;z-index:-1;pointer-events:none;
   background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-18deg);animation:shine 3.6s ease-in-out infinite}
 .treasure-btn::after{animation-delay:1.8s}
-.castle-btn::before,.treasure-btn::before{content:'✨';position:absolute;top:2px;right:6px;font-size:14px;pointer-events:none;animation:twinkle 1.6s ease-in-out infinite}
+.castle-btn::before,.treasure-btn::before,.explore-btn::before{content:'✨';position:absolute;top:2px;right:6px;font-size:14px;pointer-events:none;animation:twinkle 1.6s ease-in-out infinite}
 .treasure-btn::before{content:'💰';animation-delay:.8s}
 .castle-btn .cup{display:inline-block;transform-origin:50% 100%;animation:hopcup 2.2s ease-in-out infinite}
 .treasure-btn .cup{display:inline-block;animation:sway 2.6s ease-in-out infinite}
-.castle-btn:hover,.treasure-btn:hover{transform:translateY(-3px) scale(1.03)}
+.castle-btn:hover,.treasure-btn:hover,.explore-btn:hover{transform:translateY(-3px) scale(1.03)}
 .castle-btn:hover .cup{animation-duration:.7s}
 .treasure-btn:hover .cup{animation-duration:.8s}
-.castle-btn:active,.treasure-btn:active{transform:translateY(2px) scale(.98)}
+.castle-btn:active,.treasure-btn:active,.explore-btn:active{transform:translateY(2px) scale(.98)}
 @keyframes shine{0%,55%{left:-60%}85%,100%{left:120%}}
 @keyframes twinkle{0%,100%{opacity:.25;transform:scale(.7) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(20deg)}}
 @keyframes hopcup{0%,60%,100%{transform:translateY(0) scale(1)}70%{transform:translateY(0) scale(1.12,.88)}80%{transform:translateY(-7px) scale(.95,1.06)}90%{transform:translateY(0) scale(1.05,.95)}}
@@ -439,5 +439,56 @@ button:focus-visible{outline:3px solid var(--c);outline-offset:3px}
 .packhead small{color:var(--muted);font-weight:700;font-size:14px}
 .packhead small{display:block}
 .packhead .plocked{color:var(--accent)}
+/* ================== Nhà thám hiểm thiên tài ================== */
+.explore-btn{background:linear-gradient(135deg,#3BC47F,#1F7A8C);color:#fff;box-shadow:0 5px 0 #17606E,0 10px 24px rgba(23,96,110,.25)}
+.explore-btn::before{content:'🔭';animation-delay:.4s}
+.explore-btn::after{animation-delay:.9s}
+.explore-btn .cup{display:inline-block;animation:spinc 4s ease-in-out infinite}
+@keyframes spinc{0%,70%,100%{transform:rotate(0)}80%{transform:rotate(-25deg)}90%{transform:rotate(20deg)}}
+.xgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-top:6px}
+.xcard{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:16px;border-radius:20px;
+  background:linear-gradient(150deg,var(--x1),var(--x2));border:3px solid transparent;box-shadow:var(--shadow);transition:transform .15s}
+.xcard:hover{transform:translateY(-3px)}
+.xcard.done{border-color:var(--xc)}
+.xcard .xic{font-size:46px;line-height:1.1}
+.xcard .xbadge{position:absolute;top:10px;right:12px;font-size:28px}
+.xcard b{font-family:'Baloo 2';font-size:22px;color:var(--ink);margin-top:4px}
+.xcard .xvi{font-weight:800;color:var(--xc)}
+.xcard .xst{font-size:15px;color:var(--muted);font-weight:700}
+.xcard .xcards{font-size:13px;font-weight:800;color:var(--muted)}
+.xcard .xgo{margin-top:6px;font-weight:800;color:var(--xc)}
+.xdip{margin-top:20px}
+.xbook{margin-top:10px;background:#FBF6EC;border-radius:16px;padding:10px 14px}
+.xbook summary{cursor:pointer;font-weight:800;font-size:16px}
+.xcardlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-top:10px}
+.fcard{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;align-items:start;background:#fff;border-radius:14px;padding:10px 12px;text-align:left}
+.fcard .fe{font-size:30px;line-height:1.1}
+.fcard b{display:block;font-weight:800}
+.fcard small{display:block;color:var(--muted);font-weight:700;font-size:13px;line-height:1.4}
+.fcard.no{opacity:.6}
+.xscene{position:relative;height:150px;border-radius:var(--radius);overflow:hidden;margin-top:8px;box-shadow:var(--shadow);
+  background:linear-gradient(170deg,var(--x1),var(--x2))}
+.xscene .xd{position:absolute;font-size:30px;opacity:.55}
+.xpath{position:absolute;left:12px;right:60px;bottom:22px;display:flex;justify-content:space-between;align-items:center}
+.xpath::before{content:'';position:absolute;left:0;right:0;top:50%;border-top:4px dashed rgba(0,0,0,.18)}
+.xpath i{position:relative;width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid rgba(0,0,0,.15)}
+.xpath i.on{background:var(--xc);border-color:#fff;box-shadow:0 0 0 3px var(--xc)}
+.xhero{position:absolute;bottom:30px;left:calc(4px + var(--p) * (100% - 110px));font-size:40px;line-height:1;transition:left .6s cubic-bezier(.3,1.4,.5,1)}
+.xhero small{position:absolute;right:-12px;bottom:0;font-size:20px}
+.xflag{position:absolute;right:16px;bottom:28px;font-size:34px}
+.vihint{color:var(--muted);font-weight:700;margin-top:4px}
+.pseq{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:10px;font-size:46px;line-height:1.1}
+.pseq .pq{display:inline-grid;place-items:center;min-width:56px;border:3px dashed var(--c);border-radius:14px;color:var(--c);font-family:'Baloo 2';font-weight:800}
+.pseq.count{font-size:38px;max-width:520px;margin-inline:auto}
+.opt .oe{font-size:26px;vertical-align:-3px}
+.xwon .xmedal{width:120px;height:120px;margin:4px auto;border-radius:50%;display:grid;place-items:center;font-size:60px;
+  background:radial-gradient(circle,#fff 0 55%,var(--x2) 56%);box-shadow:0 0 0 6px var(--xc),0 10px 26px rgba(0,0,0,.15);animation:pop .6s}
+.xnew{margin:14px auto 0;max-width:560px;display:flex;flex-direction:column;gap:8px;text-align:left}
+.xcert .xbadges{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.xcert .xbadges div{background:#fff;border-radius:14px;padding:8px 4px;border:2px solid var(--xc);display:flex;flex-direction:column;align-items:center}
+.xcert .xbadges span{font-size:30px}
+.xcert .xbadges b{font-size:13px}
+.xcert .xbadges small{font-size:12px;letter-spacing:1px}
+@media (max-width:560px){.xscene{height:130px}.xhero{font-size:34px}.pseq{font-size:36px}.xcert .xbadges{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (prefers-reduced-motion:reduce){.chest .gems span{opacity:1;transform:translateY(-26px)}.chest .lid{transform:rotate(-28deg) translate(-8px,-14px)}}
