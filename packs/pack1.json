@@ -1,0 +1,2258 @@
+{
+ "id": "pack1",
+ "lessons": [
+  {
+   "key": 100,
+   "icon": "🚗",
+   "title": "Transport",
+   "vi": "Phương tiện",
+   "color": "#2F9BD6",
+   "words": [
+    [
+     "car",
+     "ô tô",
+     "🚗"
+    ],
+    [
+     "bus",
+     "xe buýt",
+     "🚌"
+    ],
+    [
+     "bike",
+     "xe đạp",
+     "🚲"
+    ],
+    [
+     "train",
+     "tàu hoả",
+     "🚆"
+    ],
+    [
+     "plane",
+     "máy bay",
+     "✈️"
+    ],
+    [
+     "boat",
+     "con thuyền",
+     "⛵"
+    ],
+    [
+     "ship",
+     "tàu thuỷ",
+     "🚢"
+    ],
+    [
+     "taxi",
+     "xe taxi",
+     "🚕"
+    ],
+    [
+     "motorbike",
+     "xe máy",
+     "🏍️"
+    ],
+    [
+     "truck",
+     "xe tải",
+     "🚚"
+    ],
+    [
+     "helicopter",
+     "trực thăng",
+     "🚁"
+    ],
+    [
+     "rocket",
+     "tên lửa",
+     "🚀"
+    ]
+   ],
+   "people": {
+    "Nam": "👦",
+    "Lan": "👧"
+   },
+   "dialog": [
+    [
+     "Nam",
+     "How do you go to school, Lan?",
+     "Lan đi học bằng gì?"
+    ],
+    [
+     "Lan",
+     "I go by bike.",
+     "Tớ đi bằng xe đạp."
+    ],
+    [
+     "Lan",
+     "How about you?",
+     "Còn cậu thì sao?"
+    ],
+    [
+     "Nam",
+     "I go by bus.",
+     "Tớ đi bằng xe buýt."
+    ],
+    [
+     "Lan",
+     "Look! A big plane!",
+     "Nhìn kìa! Một chiếc máy bay to!"
+    ],
+    [
+     "Nam",
+     "Wow! I want to fly a plane.",
+     "Ồ! Tớ muốn lái máy bay."
+    ]
+   ],
+   "grammar": {
+    "title": "How do you go to school? – I go by bus.",
+    "points": [
+     "Hỏi: <b>How do you go to</b> + nơi chốn? = Bạn đi đến ... bằng gì?",
+     "Trả lời: <b>I go by</b> + phương tiện: by bus, by car, by bike.",
+     "Đi bộ thì nói: <b>I walk.</b> (không nói \"by foot\" trong câu này)."
+    ],
+    "examples": [
+     [
+      "How do you go to school?",
+      "Con đi học bằng gì?"
+     ],
+     [
+      "I go by bus.",
+      "Con đi bằng xe buýt."
+     ],
+     [
+      "I go by car.",
+      "Con đi bằng ô tô."
+     ],
+     [
+      "I walk to school.",
+      "Con đi bộ đến trường."
+     ]
+    ],
+    "tip": "💡 Sau \"by\" không cần \"a\": by bus, by train (không nói by a bus)."
+   },
+   "fill": [
+    [
+     "I go to school ___ bus.",
+     "by",
+     [
+      "by",
+      "in",
+      "on"
+     ]
+    ],
+    [
+     "___ do you go to school?",
+     "How",
+     [
+      "How",
+      "What",
+      "Who"
+     ]
+    ],
+    [
+     "It is a ___. 🚆",
+     "train",
+     [
+      "train",
+      "truck",
+      "taxi"
+     ]
+    ],
+    [
+     "I go by ___. 🚲",
+     "bike",
+     [
+      "bike",
+      "boat",
+      "bus"
+     ]
+    ],
+    [
+     "It is a ___. 🚁",
+     "helicopter",
+     [
+      "helicopter",
+      "rocket",
+      "plane"
+     ]
+    ],
+    [
+     "I ___ to school.",
+     "walk",
+     [
+      "walk",
+      "walks",
+      "walking"
+     ]
+    ],
+    [
+     "The ___ is yellow. 🚕",
+     "taxi",
+     [
+      "taxi",
+      "ship",
+      "car"
+     ]
+    ],
+    [
+     "A ___ can fly. ✈️",
+     "plane",
+     [
+      "plane",
+      "truck",
+      "bike"
+     ]
+    ]
+   ],
+   "order": [
+    "I go by bus",
+    "How do you go to school",
+    "I go by bike",
+    "I walk to school",
+    "Look at the plane",
+    "I want to fly a plane"
+   ],
+   "dq": [
+    [
+     "Lan đi học bằng gì?",
+     "by bike",
+     [
+      "by bike",
+      "by bus",
+      "by car"
+     ]
+    ],
+    [
+     "Nam đi học bằng gì?",
+     "by bus",
+     [
+      "by bus",
+      "by bike",
+      "by train"
+     ]
+    ],
+    [
+     "Hai bạn nhìn thấy gì?",
+     "a plane",
+     [
+      "a plane",
+      "a ship",
+      "a rocket"
+     ]
+    ],
+    [
+     "Nam muốn làm gì?",
+     "fly a plane",
+     [
+      "fly a plane",
+      "ride a bike",
+      "drive a bus"
+     ]
+    ]
+   ],
+   "levels": {
+    "2": {
+     "title": "On the Road",
+     "vi": "An toàn trên đường",
+     "words": [
+      [
+       "traffic light",
+       "đèn giao thông",
+       "🚦"
+      ],
+      [
+       "road",
+       "con đường",
+       "🛣️"
+      ],
+      [
+       "bridge",
+       "cây cầu",
+       "🌉"
+      ],
+      [
+       "station",
+       "nhà ga",
+       "🚉"
+      ],
+      [
+       "airport",
+       "sân bay",
+       "🛫"
+      ],
+      [
+       "ticket",
+       "vé",
+       "🎫"
+      ],
+      [
+       "seat",
+       "ghế ngồi",
+       "💺"
+      ],
+      [
+       "map",
+       "bản đồ",
+       "🗺️"
+      ],
+      [
+       "stop",
+       "dừng lại",
+       "🛑"
+      ],
+      [
+       "fast",
+       "nhanh",
+       "💨"
+      ],
+      [
+       "slow",
+       "chậm",
+       "🐌"
+      ],
+      [
+       "helmet",
+       "mũ bảo hiểm",
+       "⛑️"
+      ]
+     ],
+     "people": {
+      "Nam": "👦",
+      "Lan": "👧"
+     },
+     "dialog": [
+      [
+       "Lan",
+       "The light is red. Stop!",
+       "Đèn đỏ rồi. Dừng lại!"
+      ],
+      [
+       "Nam",
+       "OK. I stop and wait.",
+       "Ừ. Tớ dừng lại và chờ."
+      ],
+      [
+       "Lan",
+       "Now it is green. Let's go!",
+       "Giờ đèn xanh rồi. Đi thôi!"
+      ],
+      [
+       "Nam",
+       "Look left and right first.",
+       "Nhìn bên trái và bên phải trước đã."
+      ],
+      [
+       "Lan",
+       "Good idea! Don't run on the road.",
+       "Ý hay! Đừng chạy trên đường nhé."
+      ],
+      [
+       "Nam",
+       "And wear your helmet!",
+       "Và đội mũ bảo hiểm nữa!"
+      ]
+     ],
+     "grammar": {
+      "title": "Stop! – Don't run! (câu mệnh lệnh)",
+      "points": [
+       "Câu bảo ai làm gì: bắt đầu bằng động từ. <b>Stop!</b> <b>Look left.</b> <b>Wear your helmet.</b>",
+       "Câu bảo đừng làm gì: <b>Don't</b> + động từ. <b>Don't run.</b>",
+       "Thêm <b>please</b> cho lịch sự: <b>Please wait.</b>"
+      ],
+      "examples": [
+       [
+        "Stop at the red light.",
+        "Dừng lại khi đèn đỏ."
+       ],
+       [
+        "Look left and right.",
+        "Nhìn trái và phải."
+       ],
+       [
+        "Don't run on the road.",
+        "Đừng chạy trên đường."
+       ],
+       [
+        "Wear your helmet.",
+        "Đội mũ bảo hiểm vào."
+       ]
+      ],
+      "tip": "💡 Đèn đỏ: Stop. Đèn vàng: Slow down. Đèn xanh: Go."
+     },
+     "fill": [
+      [
+       "___ at the red light.",
+       "Stop",
+       [
+        "Stop",
+        "Go",
+        "Run"
+       ]
+      ],
+      [
+       "___ run on the road.",
+       "Don't",
+       [
+        "Don't",
+        "Do",
+        "Not"
+       ]
+      ],
+      [
+       "Wear your ___. ⛑️",
+       "helmet",
+       [
+        "helmet",
+        "ticket",
+        "map"
+       ]
+      ],
+      [
+       "Look left and ___.",
+       "right",
+       [
+        "right",
+        "red",
+        "road"
+       ]
+      ],
+      [
+       "The light is green. ___!",
+       "Go",
+       [
+        "Go",
+        "Stop",
+        "Wait"
+       ]
+      ],
+      [
+       "A snail is ___. 🐌",
+       "slow",
+       [
+        "slow",
+        "fast",
+        "red"
+       ]
+      ],
+      [
+       "We wait at the ___. 🚉",
+       "station",
+       [
+        "station",
+        "bridge",
+        "seat"
+       ]
+      ],
+      [
+       "I have a train ___. 🎫",
+       "ticket",
+       [
+        "ticket",
+        "helmet",
+        "road"
+       ]
+      ]
+     ],
+     "order": [
+      "Stop at the red light",
+      "Look left and right",
+      "Do not run on the road",
+      "Wear your helmet",
+      "The light is green",
+      "Please wait here"
+     ],
+     "dq": [
+      [
+       "Đèn đầu tiên màu gì?",
+       "red",
+       [
+        "red",
+        "green",
+        "yellow"
+       ]
+      ],
+      [
+       "Khi đèn xanh, Lan nói gì?",
+       "Let's go!",
+       [
+        "Let's go!",
+        "Stop!",
+        "Wait!"
+       ]
+      ],
+      [
+       "Nam nhắc nhìn đâu trước khi đi?",
+       "left and right",
+       [
+        "left and right",
+        "up and down",
+        "the map"
+       ]
+      ],
+      [
+       "Nam nhắc đội gì?",
+       "a helmet",
+       [
+        "a helmet",
+        "a hat",
+        "a crown"
+       ]
+      ]
+     ]
+    },
+    "3": {
+     "title": "A Family Trip",
+     "vi": "Chuyến đi của gia đình",
+     "words": [
+      [
+       "trip",
+       "chuyến đi",
+       "🧳"
+      ],
+      [
+       "beach",
+       "bãi biển",
+       "🏖️"
+      ],
+      [
+       "mountain",
+       "núi",
+       "⛰️"
+      ],
+      [
+       "city",
+       "thành phố",
+       "🏙️"
+      ],
+      [
+       "village",
+       "làng quê",
+       "🏘️"
+      ],
+      [
+       "hotel",
+       "khách sạn",
+       "🏨"
+      ],
+      [
+       "camera",
+       "máy ảnh",
+       "📷"
+      ],
+      [
+       "tent",
+       "cái lều",
+       "⛺"
+      ],
+      [
+       "sea",
+       "biển",
+       "🌊"
+      ],
+      [
+       "island",
+       "hòn đảo",
+       "🏝️"
+      ],
+      [
+       "tomorrow",
+       "ngày mai",
+       "📅"
+      ],
+      [
+       "weekend",
+       "cuối tuần",
+       "🎉"
+      ]
+     ],
+     "people": {
+      "Nam": "👦",
+      "Lan": "👧"
+     },
+     "dialog": [
+      [
+       "Lan",
+       "What are you going to do this weekend?",
+       "Cuối tuần này cậu sẽ làm gì?"
+      ],
+      [
+       "Nam",
+       "I am going to visit Da Nang.",
+       "Tớ sẽ đi thăm Đà Nẵng."
+      ],
+      [
+       "Lan",
+       "How are you going to go there?",
+       "Cậu sẽ đến đó bằng gì?"
+      ],
+      [
+       "Nam",
+       "We are going to go by train.",
+       "Nhà tớ sẽ đi bằng tàu hoả."
+      ],
+      [
+       "Lan",
+       "Are you going to swim in the sea?",
+       "Cậu có định bơi ở biển không?"
+      ],
+      [
+       "Nam",
+       "Yes! And I am going to take many photos.",
+       "Có! Và tớ sẽ chụp thật nhiều ảnh."
+      ]
+     ],
+     "grammar": {
+      "title": "I am going to ... (dự định sắp làm)",
+      "points": [
+       "Nói điều mình <b>định làm</b>: <b>I am going to</b> + động từ.",
+       "Với we / they: <b>We are going to</b> ... Với he / she: <b>She is going to</b> ...",
+       "Hỏi: <b>What are you going to do?</b> = Bạn định làm gì?"
+      ],
+      "examples": [
+       [
+        "I am going to visit my grandma.",
+        "Con sẽ đi thăm bà."
+       ],
+       [
+        "We are going to go by plane.",
+        "Nhà mình sẽ đi bằng máy bay."
+       ],
+       [
+        "She is going to swim in the sea.",
+        "Bạn ấy sẽ bơi ở biển."
+       ],
+       [
+        "What are you going to do tomorrow?",
+        "Ngày mai con định làm gì?"
+       ]
+      ],
+      "tip": "💡 \"going to\" luôn đi với am / is / are ở trước."
+     },
+     "fill": [
+      [
+       "I am going ___ visit Hue.",
+       "to",
+       [
+        "to",
+        "for",
+        "at"
+       ]
+      ],
+      [
+       "We ___ going to go by train.",
+       "are",
+       [
+        "are",
+        "is",
+        "am"
+       ]
+      ],
+      [
+       "She ___ going to swim.",
+       "is",
+       [
+        "is",
+        "are",
+        "am"
+       ]
+      ],
+      [
+       "We sleep in a ___. ⛺",
+       "tent",
+       [
+        "tent",
+        "hotel",
+        "city"
+       ]
+      ],
+      [
+       "Let's swim in the ___. 🌊",
+       "sea",
+       [
+        "sea",
+        "mountain",
+        "village"
+       ]
+      ],
+      [
+       "I take photos with my ___. 📷",
+       "camera",
+       [
+        "camera",
+        "ticket",
+        "tent"
+       ]
+      ],
+      [
+       "We are going to climb the ___. ⛰️",
+       "mountain",
+       [
+        "mountain",
+        "beach",
+        "sea"
+       ]
+      ],
+      [
+       "What are you going to do ___ weekend?",
+       "this",
+       [
+        "this",
+        "these",
+        "those"
+       ]
+      ]
+     ],
+     "order": [
+      "I am going to visit Da Nang",
+      "We are going to go by train",
+      "What are you going to do",
+      "She is going to swim",
+      "I am going to take photos",
+      "We are going to stay in a hotel"
+     ],
+     "dq": [
+      [
+       "Nam sẽ đi đâu?",
+       "Da Nang",
+       [
+        "Da Nang",
+        "Ha Noi",
+        "Da Lat"
+       ]
+      ],
+      [
+       "Nhà Nam đi bằng gì?",
+       "by train",
+       [
+        "by train",
+        "by plane",
+        "by bus"
+       ]
+      ],
+      [
+       "Nam định làm gì ở biển?",
+       "swim",
+       [
+        "swim",
+        "sleep",
+        "cook"
+       ]
+      ],
+      [
+       "Nam sẽ chụp gì?",
+       "many photos",
+       [
+        "many photos",
+        "one photo",
+        "no photos"
+       ]
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "key": 101,
+   "icon": "👩‍🏫",
+   "title": "Jobs",
+   "vi": "Nghề nghiệp",
+   "color": "#8E6CEF",
+   "words": [
+    [
+     "doctor",
+     "bác sĩ",
+     "🩺"
+    ],
+    [
+     "teacher",
+     "giáo viên",
+     "👩‍🏫"
+    ],
+    [
+     "farmer",
+     "nông dân",
+     "👨‍🌾"
+    ],
+    [
+     "cook",
+     "đầu bếp",
+     "👨‍🍳"
+    ],
+    [
+     "police officer",
+     "cảnh sát",
+     "👮"
+    ],
+    [
+     "firefighter",
+     "lính cứu hoả",
+     "👩‍🚒"
+    ],
+    [
+     "pilot",
+     "phi công",
+     "👨‍✈️"
+    ],
+    [
+     "singer",
+     "ca sĩ",
+     "🎤"
+    ],
+    [
+     "dentist",
+     "nha sĩ",
+     "🦷"
+    ],
+    [
+     "builder",
+     "thợ xây",
+     "👷"
+    ],
+    [
+     "vet",
+     "bác sĩ thú y",
+     "🐾"
+    ],
+    [
+     "artist",
+     "hoạ sĩ",
+     "🎨"
+    ]
+   ],
+   "people": {
+    "Tom": "👦",
+    "Mai": "👧"
+   },
+   "dialog": [
+    [
+     "Tom",
+     "Who is that, Mai?",
+     "Mai ơi, đó là ai vậy?"
+    ],
+    [
+     "Mai",
+     "That is my mom.",
+     "Đó là mẹ tớ."
+    ],
+    [
+     "Tom",
+     "What does she do?",
+     "Mẹ cậu làm nghề gì?"
+    ],
+    [
+     "Mai",
+     "She is a doctor.",
+     "Mẹ tớ là bác sĩ."
+    ],
+    [
+     "Tom",
+     "My dad is a cook.",
+     "Bố tớ là đầu bếp."
+    ],
+    [
+     "Mai",
+     "Cool! I like his food.",
+     "Tuyệt! Tớ thích món bố cậu nấu."
+    ]
+   ],
+   "grammar": {
+    "title": "What does she do? – She is a doctor.",
+    "points": [
+     "Hỏi nghề: <b>What does he / she do?</b> = Anh ấy / cô ấy làm nghề gì?",
+     "Trả lời: <b>He is a</b> + nghề. <b>She is a</b> + nghề.",
+     "Nghề bắt đầu bằng a, e, i, o, u thì dùng <b>an</b>: <b>an artist</b>."
+    ],
+    "examples": [
+     [
+      "What does he do?",
+      "Chú ấy làm nghề gì?"
+     ],
+     [
+      "He is a farmer.",
+      "Chú ấy là nông dân."
+     ],
+     [
+      "She is a teacher.",
+      "Cô ấy là giáo viên."
+     ],
+     [
+      "She is an artist.",
+      "Cô ấy là hoạ sĩ."
+     ]
+    ],
+    "tip": "💡 Hỏi chính bạn: What do you do? Hỏi người khác: What does he / she do?"
+   },
+   "fill": [
+    [
+     "What ___ she do?",
+     "does",
+     [
+      "does",
+      "do",
+      "is"
+     ]
+    ],
+    [
+     "She is ___ teacher.",
+     "a",
+     [
+      "a",
+      "an",
+      "the"
+     ]
+    ],
+    [
+     "He is ___ artist.",
+     "an",
+     [
+      "an",
+      "a",
+      "is"
+     ]
+    ],
+    [
+     "He is a ___. 👨‍🍳",
+     "cook",
+     [
+      "cook",
+      "pilot",
+      "farmer"
+     ]
+    ],
+    [
+     "She is a ___. 🩺",
+     "doctor",
+     [
+      "doctor",
+      "singer",
+      "dentist"
+     ]
+    ],
+    [
+     "A ___ flies a plane. 👨‍✈️",
+     "pilot",
+     [
+      "pilot",
+      "vet",
+      "builder"
+     ]
+    ],
+    [
+     "A ___ helps sick animals. 🐾",
+     "vet",
+     [
+      "vet",
+      "cook",
+      "artist"
+     ]
+    ],
+    [
+     "He ___ a firefighter.",
+     "is",
+     [
+      "is",
+      "are",
+      "am"
+     ]
+    ]
+   ],
+   "order": [
+    "What does she do",
+    "She is a doctor",
+    "He is a farmer",
+    "My dad is a cook",
+    "She is an artist",
+    "I like his food"
+   ],
+   "dq": [
+    [
+     "Mẹ của Mai làm nghề gì?",
+     "a doctor",
+     [
+      "a doctor",
+      "a cook",
+      "a teacher"
+     ]
+    ],
+    [
+     "Bố của Tom làm nghề gì?",
+     "a cook",
+     [
+      "a cook",
+      "a doctor",
+      "a pilot"
+     ]
+    ],
+    [
+     "Ai hỏi \"What does she do?\"",
+     "Tom",
+     [
+      "Tom",
+      "Mai"
+     ]
+    ],
+    [
+     "Mai thích gì?",
+     "his food",
+     [
+      "his food",
+      "his car",
+      "his house"
+     ]
+    ]
+   ],
+   "levels": {
+    "2": {
+     "title": "Workplaces",
+     "vi": "Nơi làm việc",
+     "words": [
+      [
+       "hospital",
+       "bệnh viện",
+       "🏥"
+      ],
+      [
+       "school",
+       "trường học",
+       "🏫"
+      ],
+      [
+       "farm",
+       "nông trại",
+       "🚜"
+      ],
+      [
+       "restaurant",
+       "nhà hàng",
+       "🍽️"
+      ],
+      [
+       "police station",
+       "đồn cảnh sát",
+       "🚓"
+      ],
+      [
+       "fire station",
+       "trạm cứu hoả",
+       "🚒"
+      ],
+      [
+       "office",
+       "văn phòng",
+       "🏢"
+      ],
+      [
+       "shop",
+       "cửa hàng",
+       "🏪"
+      ],
+      [
+       "bank",
+       "ngân hàng",
+       "🏦"
+      ],
+      [
+       "factory",
+       "nhà máy",
+       "🏭"
+      ],
+      [
+       "library",
+       "thư viện",
+       "📚"
+      ],
+      [
+       "post office",
+       "bưu điện",
+       "📮"
+      ]
+     ],
+     "people": {
+      "Tom": "👦",
+      "Mai": "👧"
+     },
+     "dialog": [
+      [
+       "Mai",
+       "Where does your mom work, Tom?",
+       "Mẹ cậu làm việc ở đâu, Tom?"
+      ],
+      [
+       "Tom",
+       "She works in a bank.",
+       "Mẹ tớ làm ở ngân hàng."
+      ],
+      [
+       "Mai",
+       "And your dad?",
+       "Còn bố cậu?"
+      ],
+      [
+       "Tom",
+       "He works on a farm. He grows rice.",
+       "Bố tớ làm ở nông trại. Bố trồng lúa."
+      ],
+      [
+       "Mai",
+       "My aunt works in a hospital.",
+       "Dì tớ làm ở bệnh viện."
+      ],
+      [
+       "Tom",
+       "Is she a nurse?",
+       "Dì cậu là y tá à?"
+      ]
+     ],
+     "grammar": {
+      "title": "Where does he work? – He works in a hospital.",
+      "points": [
+       "Hỏi nơi làm việc: <b>Where does he / she work?</b>",
+       "Trả lời: <b>He works in a</b> + nơi. Với he / she, động từ thêm <b>-s</b>: works.",
+       "Nông trại dùng <b>on</b>: <b>on a farm</b>. Các nơi khác thường dùng <b>in</b>: in a bank, in a school."
+      ],
+      "examples": [
+       [
+        "Where does she work?",
+        "Cô ấy làm việc ở đâu?"
+       ],
+       [
+        "She works in a school.",
+        "Cô ấy làm ở trường học."
+       ],
+       [
+        "He works on a farm.",
+        "Chú ấy làm ở nông trại."
+       ],
+       [
+        "My uncle works in a factory.",
+        "Chú của con làm ở nhà máy."
+       ]
+      ],
+      "tip": "💡 I work, you work, nhưng he works, she works."
+     },
+     "fill": [
+      [
+       "Where ___ he work?",
+       "does",
+       [
+        "does",
+        "do",
+        "is"
+       ]
+      ],
+      [
+       "She ___ in a bank.",
+       "works",
+       [
+        "works",
+        "work",
+        "working"
+       ]
+      ],
+      [
+       "He works ___ a farm.",
+       "on",
+       [
+        "on",
+        "in",
+        "at"
+       ]
+      ],
+      [
+       "A doctor works in a ___. 🏥",
+       "hospital",
+       [
+        "hospital",
+        "library",
+        "shop"
+       ]
+      ],
+      [
+       "A teacher works in a ___. 🏫",
+       "school",
+       [
+        "school",
+        "bank",
+        "factory"
+       ]
+      ],
+      [
+       "We read books in the ___. 📚",
+       "library",
+       [
+        "library",
+        "restaurant",
+        "farm"
+       ]
+      ],
+      [
+       "A cook works in a ___. 🍽️",
+       "restaurant",
+       [
+        "restaurant",
+        "post office",
+        "bank"
+       ]
+      ],
+      [
+       "Firefighters work in a fire ___. 🚒",
+       "station",
+       [
+        "station",
+        "office",
+        "shop"
+       ]
+      ]
+     ],
+     "order": [
+      "Where does your mom work",
+      "She works in a bank",
+      "He works on a farm",
+      "My aunt works in a hospital",
+      "A cook works in a restaurant",
+      "Where does he work"
+     ],
+     "dq": [
+      [
+       "Mẹ của Tom làm ở đâu?",
+       "in a bank",
+       [
+        "in a bank",
+        "on a farm",
+        "in a hospital"
+       ]
+      ],
+      [
+       "Bố của Tom trồng gì?",
+       "rice",
+       [
+        "rice",
+        "fruit",
+        "flowers"
+       ]
+      ],
+      [
+       "Dì của Mai làm ở đâu?",
+       "in a hospital",
+       [
+        "in a hospital",
+        "in a school",
+        "in a shop"
+       ]
+      ],
+      [
+       "Tom đoán dì của Mai là ai?",
+       "a nurse",
+       [
+        "a nurse",
+        "a cook",
+        "a farmer"
+       ]
+      ]
+     ]
+    },
+    "3": {
+     "title": "My Dream Job",
+     "vi": "Nghề mơ ước",
+     "words": [
+      [
+       "help people",
+       "giúp đỡ mọi người",
+       "🤝"
+      ],
+      [
+       "cook food",
+       "nấu ăn",
+       "🍳"
+      ],
+      [
+       "fly a plane",
+       "lái máy bay",
+       "✈️"
+      ],
+      [
+       "grow rice",
+       "trồng lúa",
+       "🌾"
+      ],
+      [
+       "teach children",
+       "dạy trẻ em",
+       "👩‍🏫"
+      ],
+      [
+       "draw pictures",
+       "vẽ tranh",
+       "🖍️"
+      ],
+      [
+       "build houses",
+       "xây nhà",
+       "🏠"
+      ],
+      [
+       "sing songs",
+       "hát",
+       "🎵"
+      ],
+      [
+       "fix cars",
+       "sửa ô tô",
+       "🔧"
+      ],
+      [
+       "take care of animals",
+       "chăm sóc động vật",
+       "🐶"
+      ],
+      [
+       "put out fires",
+       "dập lửa",
+       "🧯"
+      ],
+      [
+       "write books",
+       "viết sách",
+       "✍️"
+      ]
+     ],
+     "people": {
+      "Tom": "👦",
+      "Mai": "👧"
+     },
+     "dialog": [
+      [
+       "Mai",
+       "What do you want to be, Tom?",
+       "Tom muốn làm nghề gì?"
+      ],
+      [
+       "Tom",
+       "I want to be a pilot.",
+       "Tớ muốn làm phi công."
+      ],
+      [
+       "Mai",
+       "Why?",
+       "Tại sao?"
+      ],
+      [
+       "Tom",
+       "Because I want to fly a plane. And you?",
+       "Vì tớ muốn lái máy bay. Còn cậu?"
+      ],
+      [
+       "Mai",
+       "I want to be a vet. I want to take care of animals.",
+       "Tớ muốn làm bác sĩ thú y. Tớ muốn chăm sóc động vật."
+      ],
+      [
+       "Tom",
+       "That's great!",
+       "Hay quá!"
+      ]
+     ],
+     "grammar": {
+      "title": "What do you want to be? – I want to be a pilot.",
+      "points": [
+       "Hỏi ước mơ: <b>What do you want to be?</b> = Con muốn làm nghề gì?",
+       "Trả lời: <b>I want to be a</b> + nghề.",
+       "Nói lý do: <b>because I want to</b> + việc làm. Ví dụ: because I want to help people."
+      ],
+      "examples": [
+       [
+        "What do you want to be?",
+        "Con muốn làm nghề gì?"
+       ],
+       [
+        "I want to be a doctor.",
+        "Con muốn làm bác sĩ."
+       ],
+       [
+        "Because I want to help people.",
+        "Vì con muốn giúp đỡ mọi người."
+       ],
+       [
+        "She wants to be a singer.",
+        "Bạn ấy muốn làm ca sĩ."
+       ]
+      ],
+      "tip": "💡 Với he / she: wants. He wants to be a builder."
+     },
+     "fill": [
+      [
+       "What do you want ___ be?",
+       "to",
+       [
+        "to",
+        "for",
+        "a"
+       ]
+      ],
+      [
+       "I want to be ___ teacher.",
+       "a",
+       [
+        "a",
+        "an",
+        "to"
+       ]
+      ],
+      [
+       "She ___ to be a singer.",
+       "wants",
+       [
+        "wants",
+        "want",
+        "wanting"
+       ]
+      ],
+      [
+       "I want to be a pilot ___ I want to fly.",
+       "because",
+       [
+        "because",
+        "but",
+        "and"
+       ]
+      ],
+      [
+       "A builder can ___ houses. 🏠",
+       "build",
+       [
+        "build",
+        "fly",
+        "sing"
+       ]
+      ],
+      [
+       "A firefighter can put out ___. 🧯",
+       "fires",
+       [
+        "fires",
+        "cars",
+        "books"
+       ]
+      ],
+      [
+       "A farmer can grow ___. 🌾",
+       "rice",
+       [
+        "rice",
+        "cars",
+        "songs"
+       ]
+      ],
+      [
+       "A mechanic can ___ cars. 🔧",
+       "fix",
+       [
+        "fix",
+        "draw",
+        "teach"
+       ]
+      ]
+     ],
+     "order": [
+      "What do you want to be",
+      "I want to be a pilot",
+      "I want to help people",
+      "She wants to be a vet",
+      "Because I want to fly a plane",
+      "I want to be an artist"
+     ],
+     "dq": [
+      [
+       "Tom muốn làm nghề gì?",
+       "a pilot",
+       [
+        "a pilot",
+        "a vet",
+        "a cook"
+       ]
+      ],
+      [
+       "Vì sao Tom muốn làm nghề đó?",
+       "to fly a plane",
+       [
+        "to fly a plane",
+        "to sing songs",
+        "to help animals"
+       ]
+      ],
+      [
+       "Mai muốn làm nghề gì?",
+       "a vet",
+       [
+        "a vet",
+        "a doctor",
+        "a teacher"
+       ]
+      ],
+      [
+       "Mai muốn chăm sóc ai?",
+       "animals",
+       [
+        "animals",
+        "children",
+        "old people"
+       ]
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "key": 102,
+   "icon": "🍓",
+   "title": "Fruits",
+   "vi": "Trái cây",
+   "color": "#E8475F",
+   "words": [
+    [
+     "apple",
+     "quả táo",
+     "🍎"
+    ],
+    [
+     "banana",
+     "quả chuối",
+     "🍌"
+    ],
+    [
+     "orange",
+     "quả cam",
+     "🍊"
+    ],
+    [
+     "grapes",
+     "quả nho",
+     "🍇"
+    ],
+    [
+     "mango",
+     "quả xoài",
+     "🥭"
+    ],
+    [
+     "watermelon",
+     "dưa hấu",
+     "🍉"
+    ],
+    [
+     "strawberry",
+     "dâu tây",
+     "🍓"
+    ],
+    [
+     "pineapple",
+     "quả dứa",
+     "🍍"
+    ],
+    [
+     "lemon",
+     "quả chanh",
+     "🍋"
+    ],
+    [
+     "peach",
+     "quả đào",
+     "🍑"
+    ],
+    [
+     "cherry",
+     "quả anh đào",
+     "🍒"
+    ],
+    [
+     "coconut",
+     "quả dừa",
+     "🥥"
+    ]
+   ],
+   "people": {
+    "Bin": "👦",
+    "Hoa": "👧"
+   },
+   "dialog": [
+    [
+     "Bin",
+     "Do you like mangoes, Hoa?",
+     "Hoa có thích xoài không?"
+    ],
+    [
+     "Hoa",
+     "Yes, I do. They are sweet.",
+     "Có. Xoài ngọt lắm."
+    ],
+    [
+     "Hoa",
+     "Do you like lemons?",
+     "Cậu có thích chanh không?"
+    ],
+    [
+     "Bin",
+     "No, I don't. They are sour.",
+     "Không. Chanh chua lắm."
+    ],
+    [
+     "Hoa",
+     "What fruit do you like?",
+     "Vậy cậu thích quả gì?"
+    ],
+    [
+     "Bin",
+     "I like watermelons!",
+     "Tớ thích dưa hấu!"
+    ]
+   ],
+   "grammar": {
+    "title": "Do you like ...? – Yes, I do. / No, I don't.",
+    "points": [
+     "Hỏi thích không: <b>Do you like</b> + đồ vật (số nhiều) + ?",
+     "Thích: <b>Yes, I do.</b> Không thích: <b>No, I don't.</b>",
+     "Nói chung một loại quả thì dùng số nhiều: I like <b>apples</b>, I like <b>mangoes</b>."
+    ],
+    "examples": [
+     [
+      "Do you like bananas?",
+      "Con có thích chuối không?"
+     ],
+     [
+      "Yes, I do.",
+      "Có ạ."
+     ],
+     [
+      "No, I don't.",
+      "Không ạ."
+     ],
+     [
+      "I like strawberries.",
+      "Con thích dâu tây."
+     ]
+    ],
+    "tip": "💡 Quả kết thúc bằng -o thêm -es: mango → mangoes. -y đổi thành -ies: cherry → cherries."
+   },
+   "fill": [
+    [
+     "___ you like apples?",
+     "Do",
+     [
+      "Do",
+      "Does",
+      "Are"
+     ]
+    ],
+    [
+     "Yes, I ___.",
+     "do",
+     [
+      "do",
+      "am",
+      "like"
+     ]
+    ],
+    [
+     "No, I ___.",
+     "don't",
+     [
+      "don't",
+      "not",
+      "no"
+     ]
+    ],
+    [
+     "I like ___. 🍌🍌",
+     "bananas",
+     [
+      "bananas",
+      "banana",
+      "a bananas"
+     ]
+    ],
+    [
+     "It is a ___. 🍍",
+     "pineapple",
+     [
+      "pineapple",
+      "coconut",
+      "peach"
+     ]
+    ],
+    [
+     "Lemons are ___. 🍋",
+     "sour",
+     [
+      "sour",
+      "sweet",
+      "big"
+     ]
+    ],
+    [
+     "It is a ___. 🍉",
+     "watermelon",
+     [
+      "watermelon",
+      "grapes",
+      "cherry"
+     ]
+    ],
+    [
+     "I like ___. 🥭🥭",
+     "mangoes",
+     [
+      "mangoes",
+      "mangos",
+      "mango"
+     ]
+    ]
+   ],
+   "order": [
+    "Do you like mangoes",
+    "Yes I do",
+    "No I do not",
+    "I like watermelons",
+    "They are sweet",
+    "What fruit do you like"
+   ],
+   "dq": [
+    [
+     "Hoa có thích xoài không?",
+     "Yes",
+     [
+      "Yes",
+      "No"
+     ]
+    ],
+    [
+     "Vì sao Bin không thích chanh?",
+     "They are sour",
+     [
+      "They are sour",
+      "They are sweet",
+      "They are big"
+     ]
+    ],
+    [
+     "Bin thích quả gì?",
+     "watermelons",
+     [
+      "watermelons",
+      "mangoes",
+      "lemons"
+     ]
+    ],
+    [
+     "Xoài có vị thế nào?",
+     "sweet",
+     [
+      "sweet",
+      "sour",
+      "salty"
+     ]
+    ]
+   ],
+   "levels": {
+    "2": {
+     "title": "Vegetables",
+     "vi": "Rau củ",
+     "words": [
+      [
+       "carrot",
+       "cà rốt",
+       "🥕"
+      ],
+      [
+       "tomato",
+       "cà chua",
+       "🍅"
+      ],
+      [
+       "potato",
+       "khoai tây",
+       "🥔"
+      ],
+      [
+       "corn",
+       "bắp ngô",
+       "🌽"
+      ],
+      [
+       "broccoli",
+       "súp lơ xanh",
+       "🥦"
+      ],
+      [
+       "cucumber",
+       "dưa chuột",
+       "🥒"
+      ],
+      [
+       "onion",
+       "củ hành",
+       "🧅"
+      ],
+      [
+       "chili",
+       "quả ớt",
+       "🌶️"
+      ],
+      [
+       "mushroom",
+       "nấm",
+       "🍄"
+      ],
+      [
+       "garlic",
+       "tỏi",
+       "🧄"
+      ],
+      [
+       "pumpkin",
+       "bí ngô",
+       "🎃"
+      ],
+      [
+       "lettuce",
+       "rau xà lách",
+       "🥬"
+      ]
+     ],
+     "people": {
+      "Bin": "👦",
+      "Hoa": "👧"
+     },
+     "dialog": [
+      [
+       "Hoa",
+       "Look at my garden, Bin!",
+       "Nhìn vườn của tớ này, Bin!"
+      ],
+      [
+       "Bin",
+       "Wow! How many carrots are there?",
+       "Ồ! Có bao nhiêu củ cà rốt vậy?"
+      ],
+      [
+       "Hoa",
+       "There are five carrots.",
+       "Có năm củ cà rốt."
+      ],
+      [
+       "Bin",
+       "And there are three tomatoes!",
+       "Và có ba quả cà chua nữa!"
+      ],
+      [
+       "Hoa",
+       "Vegetables are good for you.",
+       "Rau củ rất tốt cho cậu đấy."
+      ],
+      [
+       "Bin",
+       "I eat vegetables every day.",
+       "Tớ ăn rau mỗi ngày."
+      ]
+     ],
+     "grammar": {
+      "title": "How many ...? – There are three tomatoes.",
+      "points": [
+       "Hỏi số lượng: <b>How many</b> + danh từ số nhiều + <b>are there?</b>",
+       "Trả lời: <b>There are</b> + số + danh từ số nhiều.",
+       "Số nhiều: thường thêm <b>-s</b> (carrots). Kết thúc bằng -o thêm <b>-es</b>: tomatoes, potatoes."
+      ],
+      "examples": [
+       [
+        "How many potatoes are there?",
+        "Có bao nhiêu củ khoai tây?"
+       ],
+       [
+        "There are four potatoes.",
+        "Có bốn củ khoai tây."
+       ],
+       [
+        "There are two onions.",
+        "Có hai củ hành."
+       ],
+       [
+        "There is one pumpkin.",
+        "Có một quả bí ngô."
+       ]
+      ],
+      "tip": "💡 Một cái thì dùng There is, nhiều cái thì dùng There are."
+     },
+     "fill": [
+      [
+       "How ___ carrots are there?",
+       "many",
+       [
+        "many",
+        "much",
+        "old"
+       ]
+      ],
+      [
+       "There ___ three tomatoes.",
+       "are",
+       [
+        "are",
+        "is",
+        "am"
+       ]
+      ],
+      [
+       "There ___ one pumpkin.",
+       "is",
+       [
+        "is",
+        "are",
+        "be"
+       ]
+      ],
+      [
+       "I have two ___. 🍅🍅",
+       "tomatoes",
+       [
+        "tomatoes",
+        "tomatos",
+        "tomato"
+       ]
+      ],
+      [
+       "It is a ___. 🥕",
+       "carrot",
+       [
+        "carrot",
+        "corn",
+        "chili"
+       ]
+      ],
+      [
+       "A ___ is hot! 🌶️",
+       "chili",
+       [
+        "chili",
+        "cucumber",
+        "potato"
+       ]
+      ],
+      [
+       "It is a ___. 🍄",
+       "mushroom",
+       [
+        "mushroom",
+        "onion",
+        "garlic"
+       ]
+      ],
+      [
+       "Vegetables are good ___ you.",
+       "for",
+       [
+        "for",
+        "to",
+        "at"
+       ]
+      ]
+     ],
+     "order": [
+      "How many carrots are there",
+      "There are five carrots",
+      "There are three tomatoes",
+      "Vegetables are good for you",
+      "I eat vegetables every day",
+      "There is one pumpkin"
+     ],
+     "dq": [
+      [
+       "Vườn của ai?",
+       "Hoa",
+       [
+        "Hoa",
+        "Bin"
+       ]
+      ],
+      [
+       "Có bao nhiêu củ cà rốt?",
+       "five",
+       [
+        "five",
+        "three",
+        "two"
+       ]
+      ],
+      [
+       "Có bao nhiêu quả cà chua?",
+       "three",
+       [
+        "three",
+        "five",
+        "four"
+       ]
+      ],
+      [
+       "Bin ăn rau khi nào?",
+       "every day",
+       [
+        "every day",
+        "on Sunday",
+        "never"
+       ]
+      ]
+     ]
+    },
+    "3": {
+     "title": "At the Market",
+     "vi": "Đi chợ",
+     "words": [
+      [
+       "market",
+       "chợ",
+       "🛒"
+      ],
+      [
+       "basket",
+       "cái giỏ",
+       "🧺"
+      ],
+      [
+       "money",
+       "tiền",
+       "💵"
+      ],
+      [
+       "price",
+       "giá tiền",
+       "🏷️"
+      ],
+      [
+       "fresh",
+       "tươi",
+       "🌿"
+      ],
+      [
+       "sweet",
+       "ngọt",
+       "🍬"
+      ],
+      [
+       "sour",
+       "chua",
+       "😖"
+      ],
+      [
+       "juicy",
+       "mọng nước",
+       "💦"
+      ],
+      [
+       "bag",
+       "túi",
+       "🛍️"
+      ],
+      [
+       "buy",
+       "mua",
+       "💳"
+      ],
+      [
+       "kilo",
+       "ki-lô-gam",
+       "⚖️"
+      ],
+      [
+       "cheap",
+       "rẻ",
+       "👍"
+      ]
+     ],
+     "people": {
+      "Bin": "👦",
+      "Hoa": "👧"
+     },
+     "dialog": [
+      [
+       "Bin",
+       "Excuse me. How much are the mangoes?",
+       "Cô ơi, xoài bao nhiêu tiền ạ?"
+      ],
+      [
+       "Hoa",
+       "They are thirty thousand dong a kilo.",
+       "Ba mươi nghìn đồng một cân cháu ạ."
+      ],
+      [
+       "Bin",
+       "Are they sweet?",
+       "Xoài có ngọt không ạ?"
+      ],
+      [
+       "Hoa",
+       "Yes. They are fresh and juicy.",
+       "Có chứ. Xoài tươi và mọng nước lắm."
+      ],
+      [
+       "Bin",
+       "Can I have two kilos, please?",
+       "Cho cháu hai cân nhé."
+      ],
+      [
+       "Hoa",
+       "Here you are. Thank you!",
+       "Của cháu đây. Cảm ơn cháu!"
+      ]
+     ],
+     "grammar": {
+      "title": "How much are they? – Can I have ..., please?",
+      "points": [
+       "Hỏi giá: <b>How much is it?</b> (một cái) / <b>How much are they?</b> (nhiều cái).",
+       "Trả lời: <b>It is / They are</b> + giá tiền.",
+       "Mua lịch sự: <b>Can I have</b> + số lượng + <b>, please?</b>"
+      ],
+      "examples": [
+       [
+        "How much is the watermelon?",
+        "Quả dưa hấu bao nhiêu tiền?"
+       ],
+       [
+        "It is twenty thousand dong.",
+        "Hai mươi nghìn đồng."
+       ],
+       [
+        "Can I have three apples, please?",
+        "Cho con ba quả táo nhé."
+       ],
+       [
+        "Here you are.",
+        "Của con đây."
+       ]
+      ],
+      "tip": "💡 Nhận đồ xong nhớ nói \"Thank you!\" nhé."
+     },
+     "fill": [
+      [
+       "How ___ is it?",
+       "much",
+       [
+        "much",
+        "many",
+        "old"
+       ]
+      ],
+      [
+       "How much ___ they?",
+       "are",
+       [
+        "are",
+        "is",
+        "am"
+       ]
+      ],
+      [
+       "Can I ___ two kilos, please?",
+       "have",
+       [
+        "have",
+        "has",
+        "having"
+       ]
+      ],
+      [
+       "___ you are.",
+       "Here",
+       [
+        "Here",
+        "There",
+        "Where"
+       ]
+      ],
+      [
+       "The mangoes are ___ and juicy.",
+       "fresh",
+       [
+        "fresh",
+        "sour",
+        "cheap"
+       ]
+      ],
+      [
+       "Lemons are ___. 😖",
+       "sour",
+       [
+        "sour",
+        "sweet",
+        "juicy"
+       ]
+      ],
+      [
+       "I put fruit in my ___. 🧺",
+       "basket",
+       [
+        "basket",
+        "money",
+        "price"
+       ]
+      ],
+      [
+       "I want to ___ some apples.",
+       "buy",
+       [
+        "buy",
+        "buys",
+        "buying"
+       ]
+      ]
+     ],
+     "order": [
+      "How much are the mangoes",
+      "They are fresh and juicy",
+      "Can I have two kilos please",
+      "Here you are",
+      "How much is it",
+      "I want to buy some apples"
+     ],
+     "dq": [
+      [
+       "Bin hỏi giá quả gì?",
+       "mangoes",
+       [
+        "mangoes",
+        "apples",
+        "lemons"
+       ]
+      ],
+      [
+       "Một cân giá bao nhiêu?",
+       "thirty thousand dong",
+       [
+        "thirty thousand dong",
+        "ten thousand dong",
+        "fifty thousand dong"
+       ]
+      ],
+      [
+       "Xoài thế nào?",
+       "fresh and juicy",
+       [
+        "fresh and juicy",
+        "sour",
+        "old"
+       ]
+      ],
+      [
+       "Bin mua mấy cân?",
+       "two kilos",
+       [
+        "two kilos",
+        "one kilo",
+        "three kilos"
+       ]
+      ]
+     ]
+    }
+   }
+  }
+ ]
+}

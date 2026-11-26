@@ -1,0 +1,11 @@
+[
+ {
+  "id": "pack1",
+  "file": "pack1.json",
+  "title": "Gói 1: Đi khắp nơi",
+  "icon": "🎒",
+  "color": "#7C5CFF",
+  "date": "2026-11-27",
+  "desc": "3 chủ đề mới: Transport, Jobs, Fruits, mỗi chủ đề 3 level"
+ }
+]

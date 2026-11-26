@@ -11,7 +11,7 @@ SSH_KEY="${SSH_KEY:-../basion.pem}"
 SERVER="${SERVER:-ubuntu@ec2-13-228-49-233.ap-southeast-1.compute.amazonaws.com}"
 DOMAIN="${DOMAIN:-en.duyetnt.com}"
 WEBROOT="/var/www/en-learn"
-FILES=(index.html css js audio images)
+FILES=(index.html css js audio images packs)
 
 [ -f "$SSH_KEY" ] || { echo "❌ Không thấy khoá SSH: $SSH_KEY (đặt biến SSH_KEY=...)"; exit 1; }
 for f in "${FILES[@]}"; do [ -e "$f" ] || { echo "❌ Thiếu $f"; exit 1; }; done

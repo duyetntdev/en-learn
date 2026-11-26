@@ -19,6 +19,7 @@ API (JSON):
   POST /api/logout    (Authorization)   → 200 huỷ vé của thiết bị này
   POST /api/track     (Authorization) {events: [...]} → 200 – thống kê hành vi (bé dùng phần nào, bao lâu),
                                           kiểm tra rồi chuyển sang admin.duyetnt.com; không lưu ở đây
+  GET  /api/packs                       → 200 {packs: [...]} – các gói nội dung mới đang bật (xem packs/index.json)
   GET  /api/leaderboard?period=all|week → 200 {period, top: 10 bé đứng đầu, me (nếu gửi kèm vé)}
                                           all: theo tổng số sao; week: theo số sao giành được từ thứ Hai
                                           (giờ Việt Nam). Bằng điểm thì ai qua nhiều cấp hơn đứng trước.
@@ -26,6 +27,8 @@ API (JSON):
 Cổng quản trị nội bộ (--admin-port, chỉ nghe 127.0.0.1, KHÔNG đưa ra nginx; trang admin.duyetnt.com gọi vào):
   GET  /users               → {users: [{name, hasPin, locked, levels, updated}]}
   POST /reset-pin {name}    → 200 {ok, name} | 404 – xoá PIN, mở khoá, huỷ mọi vé; lần sau bé đặt PIN mới
+  GET  /packs               → 200 {packs: [{id, title, ..., enabled, kids, lessons: [{key, title}]}]}
+  POST /packs/toggle {id, on} → 200 {ok, id, enabled} – bật / tắt một gói nội dung (tắt thì bé không thấy nữa)
 
 Sai PIN 5 lần liên tiếp thì hồ sơ bị khoá 15 phút.
 Tên: chỉ chữ không dấu và số, 3–20 ký tự, không phân biệt hoa thường.
@@ -113,6 +116,7 @@ def open_db(path):
         day TEXT NOT NULL,             -- YYYY-MM-DD theo giờ Việt Nam
         stars INTEGER NOT NULL,        -- số sao tăng thêm trong ngày
         PRIMARY KEY (key, day))''')
+    db.execute('CREATE TABLE IF NOT EXISTS pack_off (id TEXT PRIMARY KEY)')     # gói nội dung đang bị tắt
     db.execute('''CREATE TABLE IF NOT EXISTS tokens (
         token_hash TEXT PRIMARY KEY,   -- chỉ lưu dạng băm của vé
         key TEXT NOT NULL,
@@ -233,6 +237,32 @@ def leaderboard(period, me_key=None):
     return out
 
 
+# ---------- gói nội dung mới ----------
+# packs/index.json: [{id, file, title, vi, icon, color, date, desc}] – danh sách gói, deploy cùng trang web.
+# Mỗi gói là packs/<file> (bài học cùng định dạng js/lessons.js). Trình duyệt tự tải file gói;
+# máy chủ chỉ cho biết gói nào đang bật (trang admin bật / tắt được).
+PACKS_DIR = '/var/www/en-learn/packs'
+PACK_ID_RE = re.compile(r'^[a-z0-9-]{1,30}$')
+_packs_cache = {'mtime': None, 'list': []}
+
+
+def pack_index():
+    path = os.path.join(PACKS_DIR, 'index.json')
+    try:
+        mt = os.path.getmtime(path)
+        if mt != _packs_cache['mtime']:
+            with open(path, encoding='utf-8') as f:
+                lst = json.load(f)
+            _packs_cache.update(mtime=mt, list=[x for x in lst if isinstance(x, dict) and PACK_ID_RE.match(str(x.get('id', '')))])
+    except (OSError, ValueError):
+        _packs_cache.update(mtime=None, list=[])
+    return _packs_cache['list']
+
+
+def packs_off():
+    return {r[0] for r in db.execute('SELECT id FROM pack_off')}
+
+
 def merge_max(a, b):
     out = dict(a)
     for k, v in b.items():
@@ -324,6 +354,10 @@ class Handler(SimpleHTTPRequestHandler):
                 u = self.auth_user()
                 data = leaderboard(period, u['key'] if u else None)
             return self.send_json(HTTPStatus.OK, data)
+        if p == ['api', 'packs']:
+            with db_lock:
+                off = packs_off()
+            return self.send_json(HTTPStatus.OK, {'packs': [x for x in pack_index() if x['id'] not in off]})
         if p == ['api', 'me']:
             with db_lock:
                 u = self.auth_user()
@@ -511,6 +545,8 @@ class AdminHandler(SimpleHTTPRequestHandler):
         print('admin %s %s' % (self.command, urlparse(self.path).path), flush=True)
 
     def do_GET(self):
+        if urlparse(self.path).path == '/packs':
+            return self.packs()
         if urlparse(self.path).path != '/users':
             return self.send_json(HTTPStatus.NOT_FOUND, {'error': 'not found'})
         now = int(time.time())
@@ -521,7 +557,40 @@ class AdminHandler(SimpleHTTPRequestHandler):
             {'name': n, 'hasPin': bool(hp), 'locked': lu > now, 'levels': len(json.loads(pr)), 'updated': up}
             for n, hp, lu, pr, up in rows]})
 
+    def packs(self):
+        with db_lock:
+            off = packs_off()
+            seen = [json.loads(r[0]) for r in db.execute('SELECT seen FROM users')]
+        out = []
+        for x in pack_index():
+            lessons = []
+            try:
+                with open(os.path.join(PACKS_DIR, os.path.basename(str(x.get('file', '')))), encoding='utf-8') as f:
+                    lessons = [{'key': L.get('key'), 'title': L.get('title')} for L in json.load(f).get('lessons', [])]
+            except (OSError, ValueError, AttributeError):
+                pass
+            out.append(dict(x, enabled=x['id'] not in off, lessons=lessons,
+                            kids=sum(1 for sn in seen if sn.get('pack|' + x['id']))))
+        self.send_json(HTTPStatus.OK, {'packs': out})
+
     def do_POST(self):
+        if urlparse(self.path).path == '/packs/toggle':
+            try:
+                n = int(self.headers.get('Content-Length') or 0)
+                d = json.loads(self.rfile.read(min(n, 4096)) or b'{}')
+                pid, on = d.get('id'), d.get('on')
+                if not isinstance(pid, str) or not PACK_ID_RE.match(pid) or not isinstance(on, bool):
+                    raise ValueError
+            except Exception:
+                return self.send_json(HTTPStatus.BAD_REQUEST, {'error': 'Dữ liệu không hợp lệ'})
+            with db_lock:
+                if on:
+                    db.execute('DELETE FROM pack_off WHERE id=?', (pid,))
+                else:
+                    db.execute('INSERT OR IGNORE INTO pack_off(id) VALUES(?)', (pid,))
+                db.commit()
+            print(f'admin: gói {pid} {"bật" if on else "tắt"}', flush=True)
+            return self.send_json(HTTPStatus.OK, {'ok': True, 'id': pid, 'enabled': on})
         if urlparse(self.path).path != '/reset-pin':
             return self.send_json(HTTPStatus.NOT_FOUND, {'error': 'not found'})
         try:
@@ -546,6 +615,7 @@ def main():
     ap.add_argument('--db', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'en-learn.db'))
     ap.add_argument('--admin-port', type=int, help='cổng quản trị nội bộ cho admin.duyetnt.com (chỉ 127.0.0.1)')
     ap.add_argument('--static', help='thư mục trang web (chỉ khi chạy thử trên máy)')
+    ap.add_argument('--packs', help='thư mục gói nội dung (mặc định <static>/packs hoặc /var/www/en-learn/packs)')
     ap.add_argument('--reset-pin', metavar='TÊN', help='xoá mã PIN của một hồ sơ (bé quên PIN) rồi thoát')
     ap.add_argument('--delete-user', metavar='TÊN', help='xoá hẳn một hồ sơ rồi thoát')
     ap.add_argument('--list-users', action='store_true', help='liệt kê các hồ sơ rồi thoát')
@@ -569,6 +639,8 @@ def main():
                   f'cập nhật {time.strftime("%Y-%m-%d %H:%M", time.localtime(upd))}')
         return
     Handler.static_dir = os.path.abspath(a.static) if a.static else None
+    global PACKS_DIR
+    PACKS_DIR = os.path.abspath(a.packs) if a.packs else os.path.join(Handler.static_dir, 'packs') if Handler.static_dir else PACKS_DIR
     if a.admin_port:
         adm = ThreadingHTTPServer(('127.0.0.1', a.admin_port), AdminHandler)
         threading.Thread(target=adm.serve_forever, daemon=True).start()

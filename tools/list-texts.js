@@ -19,7 +19,15 @@ const add = (text, voice = 'af_heart') => {
   if (s && !out.has(s)) out.set(s, { text, voice, file: s + '.mp3' });
 };
 
-for (const L of [...ctx.LESSONS, ...Object.values(ctx.LEVEL2), ...Object.values(ctx.LEVEL3)]) {
+// Gói nội dung mới (packs/*.json): mỗi bài kèm các level khai báo trong `levels`
+const packLessons = [];
+const packDir = path.join(__dirname, '..', 'packs');
+for (const f of (fs.existsSync(packDir) ? fs.readdirSync(packDir) : []).filter(f => f.endsWith('.json') && f !== 'index.json')) {
+  for (const L of JSON.parse(fs.readFileSync(path.join(packDir, f), 'utf8')).lessons || [])
+    packLessons.push(L, ...Object.values(L.levels || {}).map(x => Object.assign({}, L, x)));
+}
+
+for (const L of [...ctx.LESSONS, ...Object.values(ctx.LEVEL2), ...Object.values(ctx.LEVEL3), ...packLessons]) {
   L.words.forEach(w => add(w[0]));
   L.dialog.forEach(d => add(d[1], BOYS.includes(d[0]) ? 'am_puck' : 'af_heart'));
   L.grammar.examples.forEach(x => add(x[0]));
