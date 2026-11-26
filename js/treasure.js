@@ -43,6 +43,7 @@ function isleQs(v){
 
 /* ---------- Bản đồ ---------- */
 function treasure(){
+  trackScreen('treasure');
   stopAll(); FX.stop && FX.stop();
   document.documentElement.style.setProperty('--c','#1F8FBF');
   const j=tJourney(), d=islesDone(), hero=avatar(user||'').e, seeds=tCount('seeds');
@@ -80,6 +81,7 @@ function treasure(){
 /* ---------- Trên đảo ---------- */
 function playIsle(i){
   const v=VIRTUES[i];
+  trackScreen('island', {x:v.id}); track('start','island',{x:v.id});
   stopAll(); FX.stop && FX.stop();
   document.documentElement.style.setProperty('--c', v.color);
   $('#app').innerHTML=`
@@ -106,7 +108,7 @@ function playIsle(i){
       ${!ok?'<div class="grit">🔁 Câu này sẽ quay lại để con thử lần nữa nhé.</div>':''}
       <b>💡 Giải thích:</b> ${q.why||''}</div>`,
   };
-  runQuiz(P, qs, ()=>isleWon(i, wrong, seeds), '', hooks);
+  runQuiz(P, qs, ()=>{ track('done','island',{x:v.id, s:need, n:need+wrong, ok:1}); isleWon(i, wrong, seeds); }, '', hooks);
 }
 
 function isleWon(i, wrong, seeds){
@@ -138,6 +140,7 @@ function isleWon(i, wrong, seeds){
 
 /* ---------- Kho báu ---------- */
 function openChest(){
+  trackScreen('chest'); track('done','chest');
   stopAll(); FX.stop && FX.stop();
   document.documentElement.style.setProperty('--c','#D99A00');
   const today=new Date().toLocaleDateString('vi-VN');

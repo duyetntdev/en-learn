@@ -17,6 +17,8 @@ API (JSON):
                                           để hai thiết bị không ghi đè mất tiến độ của nhau);
                                           replace=true thì thay hẳn (nút "Xoá tiến độ")
   POST /api/logout    (Authorization)   → 200 huỷ vé của thiết bị này
+  POST /api/track     (Authorization) {events: [...]} → 200 – thống kê hành vi (bé dùng phần nào, bao lâu),
+                                          kiểm tra rồi chuyển sang admin.duyetnt.com; không lưu ở đây
   GET  /api/leaderboard?period=all|week → 200 {period, top: 10 bé đứng đầu, me (nếu gửi kèm vé)}
                                           all: theo tổng số sao; week: theo số sao giành được từ thứ Hai
                                           (giờ Việt Nam). Bằng điểm thì ai qua nhiều cấp hơn đứng trước.
@@ -53,6 +55,39 @@ db_lock = threading.Lock()
 db = None
 # Báo lượt truy cập cho admin.duyetnt.com (cổng nội bộ). Đặt ADMIN_INGEST= (rỗng) để tắt.
 ADMIN_INGEST = os.environ.get('ADMIN_INGEST', 'http://127.0.0.1:8096/ingest')
+ADMIN_EVENTS = ADMIN_INGEST.rsplit('/', 1)[0] + '/events' if ADMIN_INGEST else ''
+
+# Thống kê hành vi (POST /api/track): chỉ nhận các khu vực / hoạt động đã biết, không nhận nội dung bé nhập.
+#   view  – thời gian ở một màn hình: a = khu vực, d = số giây
+#   start / done – bắt đầu / làm xong một hoạt động: a = hoạt động, s / n = số câu đúng / tổng, ok = qua bài
+#   l = số thứ tự bài (0..), lv = cấp, x = mã đảo (trò kho báu), t = thời điểm (unix, giây)
+TRACK_EVENTS = {'view', 'start', 'done'}
+TRACK_AREAS = {'home', 'fame', 'lesson.vocab', 'lesson.dialog', 'lesson.grammar', 'lesson.practice', 'lesson.test',
+               'castle', 'treasure', 'island', 'chest', 'practice', 'test'}
+TRACK_MAX = 60
+ID_RE = re.compile(r'^[a-z]{1,20}$')
+
+
+def clean_events(lst):
+    out, now = [], int(time.time())
+    if not isinstance(lst, list):
+        return out
+    num = lambda v, lo, hi: v if isinstance(v, int) and not isinstance(v, bool) and lo <= v <= hi else None
+    for e in lst[:TRACK_MAX]:
+        if not isinstance(e, dict) or e.get('e') not in TRACK_EVENTS or e.get('a') not in TRACK_AREAS:
+            continue
+        t = num(e.get('t'), now - 7 * 86400, now + 60)
+        ev = {'e': e['e'], 'a': e['a'], 't': t if t is not None else now}
+        for k, lo, hi in (('d', 1, 3600), ('l', 0, 999), ('lv', 1, 9), ('s', 0, 999), ('n', 1, 999), ('ok', 0, 1)):
+            v = num(e.get(k), lo, hi)
+            if v is not None:
+                ev[k] = v
+        if isinstance(e.get('x'), str) and ID_RE.match(e['x']):
+            ev['x'] = e['x']
+        if ev['e'] == 'view' and 'd' not in ev:
+            continue
+        out.append(ev)
+    return out
 
 
 def open_db(path):
@@ -220,12 +255,15 @@ class Handler(SimpleHTTPRequestHandler):
         """Gửi sự kiện (tên, IP, trình duyệt) cho trang admin – chạy nền, lỗi thì bỏ qua, không làm chậm bé."""
         if not ADMIN_INGEST:
             return
+        self.forward(ADMIN_INGEST, {'site': 'en', 'user': name, 'kind': kind})
+
+    def forward(self, url, data):
+        """Gửi JSON (kèm IP, trình duyệt) sang cổng nội bộ của admin trong luồng nền; lỗi thì bỏ qua."""
         ip = (self.headers.get('X-Forwarded-For') or '').split(',')[-1].strip() or self.client_address[0]
-        body = json.dumps({'site': 'en', 'user': name, 'kind': kind, 'ip': ip,
-                           'ua': (self.headers.get('User-Agent') or '')[:300]}).encode()
+        body = json.dumps(dict(data, ip=ip, ua=(self.headers.get('User-Agent') or '')[:300])).encode()
         def send():
             try:
-                urllib.request.urlopen(urllib.request.Request(ADMIN_INGEST, body, {'Content-Type': 'application/json'}),
+                urllib.request.urlopen(urllib.request.Request(url, body, {'Content-Type': 'application/json'}),
                                        timeout=2).close()
             except Exception:
                 pass
@@ -327,7 +365,19 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json(HTTPStatus.OK, {'ok': True})
         if len(p) == 4 and p[:2] == ['api', 'users'] and p[3] == 'pin':
             return self.set_first_pin(p[2], data)
+        if p == ['api', 'track']:
+            return self.track(data)
         return self.error(HTTPStatus.NOT_FOUND, 'Không có đường dẫn này')
+
+    def track(self, data):
+        with db_lock:
+            u = self.auth_user()
+        if not u:
+            return self.error(HTTPStatus.UNAUTHORIZED, 'Cần đăng nhập lại')
+        events = clean_events(data.get('events'))
+        self.send_json(HTTPStatus.OK, {'ok': True, 'n': len(events)})
+        if events and ADMIN_EVENTS:
+            self.forward(ADMIN_EVENTS, {'site': 'en', 'user': u['name'], 'events': events})
 
     def create_user(self, data):
         name, pin = data.get('name'), data.get('pin')

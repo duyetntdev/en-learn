@@ -94,8 +94,41 @@ async function refreshFromServer(){
   }catch(e){ setSync('offline'); }
 }
 
+/* ================== THỐNG KÊ HÀNH VI ==================
+   Ghi lại bé dùng phần nào và bao lâu (để biết bé thích học hay chơi phần nào), xem ở admin.duyetnt.com.
+   Không ghi câu trả lời hay bất cứ thứ gì bé gõ. Chỉ gửi khi đã đăng nhập; gửi lỗi thì bỏ qua.
+   trackScreen(khu vực, {l, lv, x}) – gọi khi đổi màn hình; thời gian ở màn trước được gửi thành sự kiện "view"
+     (không tính lúc trang bị ẩn, tối đa 30 phút một lần).
+   track('start'|'done', hoạt động, {l, lv, x, s, n, ok}) – bắt đầu / làm xong luyện tập, kiểm tra, trò chơi.
+   Gom lại, gửi mỗi 20 giây và khi bé rời trang (POST api/track). */
+const TR = {q:[], cur:null, paused:null, timer:0};
+function track(e, a, x){
+  if(!user || !token) return;
+  TR.q.push(Object.assign({e, a, t:Math.floor(Date.now()/1000)}, x||{}));
+  if(TR.q.length >= 40) flushTrack(); else if(!TR.timer) TR.timer = setTimeout(()=>flushTrack(), 20000);
+}
+function trackScreen(a, x){
+  const now = Date.now(), c = TR.cur;
+  if(c){ const d = Math.round((now - c.t0)/1000); if(d >= 2) track('view', c.a, Object.assign({d:Math.min(d, 1800)}, c.x)); }
+  TR.cur = a ? {a, x:x||{}, t0:now} : null;
+}
+function flushTrack(keepalive){
+  clearTimeout(TR.timer); TR.timer = 0;
+  if(!TR.q.length || !token) return;
+  const events = TR.q.splice(0);
+  try{
+    fetch('api/track', {method:'POST', keepalive:!!keepalive, cache:'no-store',
+      headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+token}, body:JSON.stringify({events})}).catch(()=>{});
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'hidden'){ if(TR.cur){ TR.paused = TR.cur; trackScreen(null); } flushTrack(true); }
+  else if(TR.paused){ const p = TR.paused; TR.paused = null; trackScreen(p.a, p.x); }
+});
+
 /* Màn hình đăng nhập: tên → (tên mới: đặt PIN) / (tên đã có: nhập PIN) / (hồ sơ cũ chưa có PIN: đặt PIN) */
 function login(prefill){
+  trackScreen(null); flushTrack(true);
   stopAll(); FX.stop && FX.stop();
   document.documentElement.style.setProperty('--c','#FF8A5B');
   const legacy = !user && Object.keys(progress).length>0;  // tiến độ cũ trước khi có tính năng tên
@@ -207,6 +240,7 @@ function logout(){
   m.querySelector('#no').onclick=()=>m.remove();
   m.querySelector('#yes').onclick=async()=>{
     if(syncState==='saving'||syncState==='offline') await sync();
+    trackScreen(null); flushTrack(true);
     try{ if(token) await api('POST','api/logout'); }catch(e){}     // huỷ vé của máy này
     user=null; token=null; progress={}; seen={}; clearTimeout(syncTimer); setSync('ok');
     try{ [USER_KEY,TOKEN_KEY,KEY,SEEN_KEY].forEach(k=>localStorage.removeItem(k)); }catch(e){}
@@ -402,6 +436,7 @@ document.addEventListener('click',e=>{
 
 /* ================== TRANG CHỦ ================== */
 function home(){
+  trackScreen('home');
   document.documentElement.style.setProperty('--c','#FF8A5B');
   const done = LESSONS.filter((_,i)=>passed(i)).length;
   const cur = LESSONS.findIndex((_,i)=>!passed(i));
@@ -414,27 +449,27 @@ function home(){
     <button class="fame-btn" id="fame"><span class="cup">🏆</span><span class="t">Bảng vinh danh<small id="myrank">${rankLabel(lastRank)}</small></span></button>
     ${typeof castle==='function'?`<button class="fame-btn castle-btn" id="castle"><span class="cup">🏰</span><span class="t">Giải cứu công chúa<small>${castleLabel()}</small></span></button>`:''}
     ${typeof treasure==='function'?`<button class="fame-btn treasure-btn" id="treasure"><span class="cup">🗺️</span><span class="t">Đi tìm kho báu<small>${treasureLabel()}</small></span></button>`:''}
-    <div class="prog"><div class="pct"><b>📊 Hoàn thành ${pct}%</b><span>${lvDone}/${lvTotal} cấp đã qua</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>
+    <div class="prog"><div class="pct"><b>📊 Hoàn thành ${pct}%</b><span>${lvDone}/${lvTotal} level đã qua</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>
   </div>
   <div class="hello"><div style="font-size:40px">🦉</div><div class="bubble">${
-    pct===100 ? 'Tuyệt vời! Con đã hoàn thành 100% — qua tất cả các cấp của mọi bài! 🎓👑 Làm lại để gặp câu hỏi mới nhé.'
-    : lvDone===0 ? 'Xin chào! Mình là cú Ollie. Con thích bài nào thì bấm vào bài đó để học nhé! Chưa biết chọn gì thì bắt đầu với <b>Bài 1</b> 😊'
-    : done===LESSONS.length ? `Giỏi quá! Con đã hoàn thành ${pct}%. Bấm vào một bài để học <b>cấp tiếp theo</b> với nội dung mới nhé.`
-    : `Giỏi quá! Con đã hoàn thành ${pct}%. Gợi ý: <b>Bài ${cur+1}: ${LESSONS[cur].title}</b> — hoặc chọn bài con thích!`}</div></div>
+    pct===100 ? 'Tuyệt vời! Con đã hoàn thành 100% — qua tất cả các level của mọi bài! 🎓👑 Làm lại để gặp câu hỏi mới nhé.'
+    : lvDone===0 ? 'Xin chào! Mình là cú Ollie. Con thích bài nào thì bấm vào bài đó để học nhé! Chưa biết chọn gì thì bắt đầu với <b>Lesson 1</b> 😊'
+    : done===LESSONS.length ? `Giỏi quá! Con đã hoàn thành ${pct}%. Bấm vào một bài để học <b>level tiếp theo</b> với nội dung mới nhé.`
+    : `Giỏi quá! Con đã hoàn thành ${pct}%. Gợi ý: <b>Lesson ${cur+1}: ${LESSONS[cur].title}</b> — hoặc chọn bài con thích!`}</div></div>
   <div class="grid">${LESSONS.map((L,i)=>{
     const lock=!unlocked(i), st=starsOf(i,1), N=nLevels(i), nx=startLevel(i);
     const lp = lessonPct(i);
     const state = lock ? 'Qua bài '+i+' để mở khoá'
       : !lessonDone(i) ? '▶ Bắt đầu học'
-      : !passed(i,nx) ? `▶ Học tiếp Cấp ${nx}`
+      : !passed(i,nx) ? `▶ Học tiếp Level ${nx}`
       : '✅ Hoàn thành — làm lại với câu hỏi mới';
     const lvTags = Array.from({length:N},(_,k)=>k+1).map(m=>{
       const s2=starsOf(i,m), open=lvUnlocked(i,m);
-      return `<span class="lvtag ${s2?'':'todo'} ${open?'':'off'}">Cấp ${m} ${s2?stars(s2):open?'':'🔒'}</span>`; }).join('');
-    return `<button class="lcard ${lock?'locked':''} ${i===cur?'current':''}" style="--c:${L.color}" data-open="${i}" aria-label="Bài ${i+1} ${L.title}${lock?' (đang khoá)':''}">
+      return `<span class="lvtag ${s2?'':'todo'} ${open?'':'off'}">Level ${m} ${s2?stars(s2):open?'':'🔒'}</span>`; }).join('');
+    return `<button class="lcard ${lock?'locked':''} ${i===cur?'current':''}" style="--c:${L.color}" data-open="${i}" aria-label="Lesson ${i+1} ${L.title}${lock?' (đang khoá)':''}">
       ${lock?'<span class="lock">🔒</span>':st?`<span class="stars">${stars(st)}</span>`:''}
       <div class="ic">${L.icon}</div>
-      <div class="num">Bài ${i+1}</div><h3>${L.title}</h3><div class="vi">${L.vi}</div>
+      <div class="num">Lesson ${i+1}</div><h3>${L.title}</h3><div class="vi">${L.vi}</div>
       ${N>1&&(FREE_CHOICE||st)?`<div class="lvrow">${lvTags}</div>`:''}
       <div class="lpct"><div class="lbar"><i style="width:${lp}%"></i></div><span>${lp}%</span></div>
       <div class="state">${state}</div>
@@ -448,7 +483,7 @@ function home(){
   loadMyRank();
   document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{
     const i=+b.dataset.open;
-    if(!unlocked(i)){ b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); toast(`🔒 Con cần qua bài kiểm tra Bài ${i} trước nhé!`); return; }
+    if(!unlocked(i)){ b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); toast(`🔒 Con cần qua bài kiểm tra Lesson ${i} trước nhé!`); return; }
     lesson(i,'vocab',startLevel(i));
   });
   $('#reset').onclick=()=>{
@@ -485,6 +520,7 @@ async function loadMyRank(){
   }catch(e){}
 }
 async function fame(period){
+  trackScreen('fame');
   stopAll(); FX.stop && FX.stop();
   document.documentElement.style.setProperty('--c','#FF8A5B');
   $('#app').innerHTML=`
@@ -531,28 +567,29 @@ async function fame(period){
       return `<div class="rrow ${isMe?'me':''}"><div class="rk">${p.rank}</div><div class="av" style="--avbg:${av.bg}">${av.e}</div>
         <div class="rwho"><b>${esc(p.name)}${isMe?' (con)':''}</b><div class="rbar"><i style="width:${pct(p)}%"></i></div>
           <div class="badges"><span class="pc">Hoàn thành ${pct(p)}%</span>${p.badges.map(x=>`<span class="badge">${esc(x)}</span>`).join('')}</div></div>
-        <div class="sc">${pts(p)}<small>${p.levels} cấp</small></div></div>`; }).join('')}</div>
+        <div class="sc">${pts(p)}<small>${p.levels} level</small></div></div>`; }).join('')}</div>
     ${a.badges.length||(b&&b.badges.length)||(c&&c.badges.length)?`<div class="topbadges">${[a,b,c].filter(Boolean).filter(p=>p.badges.length).map(p=>`<span><b>${esc(p.name)}</b> ${p.badges.map(x=>`<span class="badge">${esc(x)}</span>`).join(' ')}</span>`).join('')}</div>`:''}
-    <p class="hint center small">Bằng điểm thì ai qua nhiều cấp hơn đứng trước. ${d.total>10?`Có ${d.total} bạn trên bảng, hiện 10 bạn đứng đầu.`:''}</p>`;
+    <p class="hint center small">Bằng điểm thì ai qua nhiều level hơn đứng trước. ${d.total>10?`Có ${d.total} bạn trên bảng, hiện 10 bạn đứng đầu.`:''}</p>`;
 }
 
 /* ================== BÀI HỌC ================== */
 const TABS=[['vocab','📚 Từ vựng'],['dialog','💬 Hội thoại'],['grammar','✏️ Ngữ pháp'],['practice','🎯 Luyện tập'],['test','🏆 Kiểm tra']];
 function lesson(i,tab,n=1){
   const L=lv(i,n), N=nLevels(i), st=starsOf(i,n);
+  trackScreen('lesson.'+tab, {l:i, lv:n});
   document.documentElement.style.setProperty('--c',L.color);
   stopAll();
   $('#app').innerHTML=`
   <div class="lhead"><button class="back" id="back" aria-label="Về trang chủ">⬅</button><div class="ic">${L.icon}</div>
-    <div><div class="sub">Bài ${i+1} · ${N>1?'Cấp '+n+' · ':''}${L.vi} ${st?'· '+stars(st):''}</div><h2>${L.title}</h2></div></div>
-  ${N>1?`<div class="lvsw">${Array.from({length:N},(_,k)=>k+1).map(m=>`<button class="lvbtn ${m===n?'on':''} ${lvUnlocked(i,m)?'':'locked'}" data-lv="${m}">Cấp ${m} ${!lvUnlocked(i,m)?'🔒':starsOf(i,m)?stars(starsOf(i,m)):''}</button>`).join('')}</div>`:''}
+    <div><div class="sub">Lesson ${i+1} · ${N>1?'Level '+n+' · ':''}${L.vi} ${st?'· '+stars(st):''}</div><h2>${L.title}</h2></div></div>
+  ${N>1?`<div class="lvsw">${Array.from({length:N},(_,k)=>k+1).map(m=>`<button class="lvbtn ${m===n?'on':''} ${lvUnlocked(i,m)?'':'locked'}" data-lv="${m}">Level ${m} ${!lvUnlocked(i,m)?'🔒':starsOf(i,m)?stars(starsOf(i,m)):''}</button>`).join('')}</div>`:''}
   <div class="tabs">${TABS.map(([k,t])=>`<button class="tab ${k===tab?'on':''}" data-tab="${k}">${t}</button>`).join('')}</div>
   <div class="panel" id="panel"></div>`;
   $('#back').onclick=home;
   document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>lesson(i,b.dataset.tab,n));
   document.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{
     const m=+b.dataset.lv;
-    if(!lvUnlocked(i,m)){ b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); toast(`🔒 Qua bài kiểm tra Cấp ${m-1} để mở Cấp ${m} nhé!`); return; }
+    if(!lvUnlocked(i,m)){ b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); toast(`🔒 Qua bài kiểm tra Level ${m-1} để mở Level ${m} nhé!`); return; }
     lesson(i,'vocab',m);
   });
   const P=$('#panel');
@@ -596,24 +633,25 @@ function lesson(i,tab,n=1){
     wireNext('practice');
   }
   if(tab==='practice'){
-    const start=()=>runQuiz(P, makePractice(L), (sc,q)=>{
+    const start=()=>{ track('start','practice',{l:i,lv:n}); runQuiz(P, makePractice(L), (sc,q)=>{
+      track('done','practice',{l:i,lv:n,s:sc,n:q});
       P.innerHTML=`<div class="center result"><div class="big">${sc>=q-1?'🌟':sc>=q/2?'👍':'💪'}</div><h3>Luyện tập xong!</h3>
       <div class="sc">Đúng ${sc}/${q} câu</div><p class="hint">${sc>=q-1?'Con đã sẵn sàng làm bài kiểm tra!':'Luyện thêm một lượt nữa cho chắc nhé.'}</p>
       <div class="row"><button class="btn ghost" id="again">🔁 Luyện tiếp</button><button class="btn" id="totest">🏆 Làm bài kiểm tra</button></div></div>`;
       $('#again').onclick=start; $('#totest').onclick=()=>lesson(i,'test',n);
       if(sc>=q-1) celebrate(L, 1);
-    });
+    }); };
     start();
   }
   if(tab==='test'){
-    const unlockMsg = FREE_CHOICE ? (n<N ? `🎯 Qua bài để hoàn thành Cấp ${n}` : '👑 Thử thách cấp cao nhất')
-      : n===1 ? (N>1?'🔓 Qua bài để mở bài tiếp theo và Cấp 2':'🔓 Qua bài để mở bài tiếp theo') : n<N ? `🔓 Qua bài để mở Cấp ${n+1}` : '👑 Thử thách cấp cao nhất';
-    P.innerHTML=`<div class="testintro"><div class="big">🏆</div><h3>Bài kiểm tra Bài ${i+1}${N>1?' · Cấp '+n:''}</h3>
+    const unlockMsg = FREE_CHOICE ? (n<N ? `🎯 Qua bài để hoàn thành Level ${n}` : '👑 Thử thách level cao nhất')
+      : n===1 ? (N>1?'🔓 Qua bài để mở bài tiếp theo và Level 2':'🔓 Qua bài để mở bài tiếp theo') : n<N ? `🔓 Qua bài để mở Level ${n+1}` : '👑 Thử thách level cao nhất';
+    P.innerHTML=`<div class="testintro"><div class="big">🏆</div><h3>Bài kiểm tra Lesson ${i+1}${N>1?' · Level '+n:''}</h3>
       <p class="hint">Gồm từ vựng, nghe, ngữ pháp, sắp xếp câu và hội thoại.</p>
       <div><span class="pill">📝 ${TEST_N} câu</span><span class="pill">✅ Cần đúng ${PASS} câu</span><span class="pill">${unlockMsg}</span></div>
       ${st?`<p class="hint" style="margin-top:12px">Kết quả tốt nhất: ${stars(st)} · Lần này có câu hỏi mới 🆕</p>`:''}
       <div class="row"><button class="btn" id="go">Bắt đầu kiểm tra</button></div></div>`;
-    $('#go').onclick=()=>runQuiz(P, makeTest(L,pk(i,n)), (sc,q)=>testResult(i,n,sc,q), 'Kiểm tra');
+    $('#go').onclick=()=>{ track('start','test',{l:i,lv:n}); runQuiz(P, makeTest(L,pk(i,n)), (sc,q)=>testResult(i,n,sc,q), 'Kiểm tra'); };
   }
   window.scrollTo(0,0);
 }
@@ -746,15 +784,16 @@ function runQuiz(P, qs, onDone, label, hooks){
 
 function testResult(i,lvl,sc,n){
   const P=$('#panel'), ok=sc>=PASS, st= sc>=n?3: sc>=n-2?2: ok?1:0;
+  track('done','test',{l:i,lv:lvl,s:sc,n,ok:ok?1:0});
   const first=!passed(i,lvl), key=pk(i,lvl), N=nLevels(i), hasNext=lvl<N;
   if(ok){ progress[key]=Math.max(progress[key]||0,st); save(); celebrate(lv(i,lvl), st+lvl-1); }   // sức mạnh 1–5
   const last=i===LESSONS.length-1;
   const unlockMsg = !first ? 'Làm tốt lắm! Lần sau làm lại sẽ có câu hỏi mới 🆕'
-    : FREE_CHOICE ? (hasNext ? `✅ Hoàn thành Cấp ${lvl}! Thử thách tiếp theo: <b>Cấp ${lvl+1}</b>` : `👑 Con đã chinh phục cấp cao nhất của bài ${LESSONS[i].title}!`)
+    : FREE_CHOICE ? (hasNext ? `✅ Hoàn thành Level ${lvl}! Thử thách tiếp theo: <b>Level ${lvl+1}</b>` : `👑 Con đã chinh phục level cao nhất của bài ${LESSONS[i].title}!`)
       + `<br>📊 Con đã hoàn thành <b>${totalPct()}%</b> chương trình`
-    : lvl===1 ? [hasNext?`🆕 Đã mở <b>Cấp 2</b> của bài này`:'', last?'':`🔓 Đã mở khoá Bài ${i+2}: ${LESSONS[i+1].title}`].filter(Boolean).join('<br>') || 'Con đã hoàn thành tất cả các bài học! 🎓'
-    : hasNext ? `🌟 Con đã chinh phục Cấp ${lvl}!<br>🆕 Đã mở <b>Cấp ${lvl+1}</b> của bài này`
-    : `👑 Con đã chinh phục cấp cao nhất của bài ${LESSONS[i].title}!`;
+    : lvl===1 ? [hasNext?`🆕 Đã mở <b>Level 2</b> của bài này`:'', last?'':`🔓 Đã mở khoá Lesson ${i+2}: ${LESSONS[i+1].title}`].filter(Boolean).join('<br>') || 'Con đã hoàn thành tất cả các bài học! 🎓'
+    : hasNext ? `🌟 Con đã chinh phục Level ${lvl}!<br>🆕 Đã mở <b>Level ${lvl+1}</b> của bài này`
+    : `👑 Con đã chinh phục level cao nhất của bài ${LESSONS[i].title}!`;
   P.innerHTML=`<div class="center result">
     <div class="big ${ok?'trophy':''}">${ok?pickOne(['🏆','🥇','👑','🎖️','🏅','🦄','🚀','🌟']):'🌱'}</div>
     <h3>${ok?pickOne(['Con đã qua bài!','Qua bài rồi! Hoan hô!','Con giỏi quá đi!','Xuất sắc! Qua bài rồi!','Siêu sao tiếng Anh!']):'Gần được rồi!'}</h3>
@@ -762,12 +801,12 @@ function testResult(i,lvl,sc,n){
     ${ok?`<div class="st">${stars(st)}</div>`:''}
     <p class="hint">${ok?unlockMsg:'Ôn lại từ vựng và ngữ pháp rồi thử lại nhé (lần sau có câu hỏi mới). Con làm được mà! 💪'}</p>
     <div class="row">${ok
-      ? `<button class="btn ghost" id="r1">🏠 Trang chủ</button>${hasNext?`<button class="btn" id="r3">🆕 Học Cấp ${lvl+1} →</button>`:''}${last?'':`<button class="btn ${hasNext?'ghost':''}" id="r2">Bài ${i+2} →</button>`}`
+      ? `<button class="btn ghost" id="r1">🏠 Trang chủ</button>${hasNext?`<button class="btn" id="r3">🆕 Học Level ${lvl+1} →</button>`:''}${last?'':`<button class="btn ${hasNext?'ghost':''}" id="r2">Lesson ${i+2} →</button>`}`
       : `<button class="btn ghost" id="r1">📚 Ôn lại bài</button><button class="btn" id="r2">🔁 Làm lại</button>`}</div></div>`;
   if(ok){ $('#r1').onclick=home;
     const r2=$('#r2'); if(r2) r2.onclick=()=>lesson(i+1,'vocab',startLevel(i+1));
     const r3=$('#r3'); if(r3) r3.onclick=()=>lesson(i,'vocab',lvl+1); }
-  else { $('#r1').onclick=()=>lesson(i,'vocab',lvl); $('#r2').onclick=()=>runQuiz(P, makeTest(lv(i,lvl),key), (s,m)=>testResult(i,lvl,s,m), 'Kiểm tra'); }
+  else { $('#r1').onclick=()=>lesson(i,'vocab',lvl); $('#r2').onclick=()=>{ track('start','test',{l:i,lv:lvl}); runQuiz(P, makeTest(lv(i,lvl),key), (s,m)=>testResult(i,lvl,s,m), 'Kiểm tra'); }; }
 }
 
 // Chưa có tên thì bắt buộc nhập tên trước khi học

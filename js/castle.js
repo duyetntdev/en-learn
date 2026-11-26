@@ -56,6 +56,7 @@ function sceneHTML(hero){
 }
 
 function castle(){
+  trackScreen('castle');
   stopAll(); FX.stop && FX.stop();
   document.documentElement.style.setProperty('--c','#9B6BFF');
   const hero=avatar(user||'').e, rescues=castleCount('rescues'), owned=GIFTS.filter(giftCount).length;
@@ -121,6 +122,7 @@ function play(hero){
     },
   };
   say(pickOne(PRINCESS_SAY.start));
+  track('start','castle');
   runQuiz(P, qs, ()=>rescued(hero, answered-wrong, answered, wrong), 'Giải cứu', hooks);
   window.scrollTo({top:0, behavior:'smooth'});
 }
@@ -129,6 +131,7 @@ function rescued(hero, right, answered, wrong){
   const P=$('#panel'), S=$('#scene');
   const st = wrong===0 ? 3 : wrong<=3 ? 2 : 1;
   const title = ['','Hiệp sĩ dũng cảm','Hiệp sĩ bạc','Hiệp sĩ vàng'][st];
+  track('done','castle',{s:right, n:answered, ok:1});
   const gifts=[pickGift()]; markSeen([CK('rescues'), CK('gift|'+gifts[0][0])]);
   if(st===3){ gifts.push(pickGift()); markSeen([CK('gift|'+gifts[1][0])]); }
   const bars=$('#bars'); if(bars) bars.classList.remove('shake');
