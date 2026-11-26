@@ -61,46 +61,59 @@ const WITCH_SVG = `<svg class="witch" viewBox="0 0 150 130" aria-hidden="true">
 </svg>`;
 const WRONG_WAIT = 2600;   // trả lời sai: chờ phù thủy bay tới, cười xong rồi mới hiện thông báo (mili-giây)
 
-// Tiếng cười nham hiểm của bà phù thủy, tổng hợp bằng Web Audio (không cần file âm thanh):
-// sấm rền → 3 tiếng "hừ… hừ…" trầm, chậm → tràng "há há há" the thé cao dần, giọng khàn (méo tiếng) và có tiếng vọng.
+// Tiếng cười nham hiểm của bà phù thủy, tổng hợp bằng Web Audio (không cần file âm thanh).
+// Mỗi tiếng "ha / hi / hừ" = hơi thở "h" (tiếng ồn ngắn) + dây thanh (sóng răng cưa) đi qua 3 bộ lọc khẩu hình (formant)
+// cho ra nguyên âm giống giọng người. Lên / xuống âm lượng mượt để tiếng gọn, không méo, không lụp bụp.
+// Trình tự: sấm nhỏ → "hừ… hừ… hừ…" trầm → tràng "hí hí hí…" the thé cao dần → "háaa" kéo dài.
+// Tiếng cười dùng trong game: file thu sẵn audio/sfx/witch-laugh.mp3 (~2,3 giây, đã cắt khoảng lặng và chuẩn hoá âm lượng).
+// Không tải / phát được file thì dùng tiếng cười tổng hợp villainLaugh() bên dưới.
+let witchAudio = null;
+function preloadWitchLaugh(){ try{ if(!witchAudio){ witchAudio=new Audio('audio/sfx/witch-laugh.mp3?v=1'); witchAudio.preload='auto'; witchAudio.load(); } }catch(e){} }
+function witchLaugh(){
+  try{
+    preloadWitchLaugh(); witchAudio.currentTime=0; witchAudio.volume=1;
+    const p=witchAudio.play(); if(p && p.catch) p.catch(()=>villainLaugh());
+  }catch(e){ villainLaugh(); }
+}
+const VOWEL = {u:[350,900,2400], i:[420,2100,2900], a:[820,1250,2600]};
 function villainLaugh(){
   try{
     const A=ac(), t0=A.currentTime;
-    const master=A.createDynamicsCompressor();                 // giới hạn âm lượng: to nhưng không vỡ tiếng
-    master.threshold.value=-12; master.knee.value=6; master.ratio.value=12; master.attack.value=0.003; master.release.value=0.2;
-    const vol=A.createGain(); vol.gain.value=0.95; master.connect(vol); vol.connect(A.destination);
+    const bus=A.createGain(); bus.gain.value=1.45;
+    const lim=A.createDynamicsCompressor();                     // chỉ chặn đỉnh, gần như không nén
+    lim.threshold.value=-6; lim.knee.value=4; lim.ratio.value=20; lim.attack.value=0.002; lim.release.value=0.15;
+    bus.connect(lim); lim.connect(A.destination);
+    const echo=A.createDelay(1), fb=A.createGain(), wet=A.createGain();   // vọng nhẹ
+    echo.delayTime.value=0.19; fb.gain.value=0.18; wet.gain.value=0.16;
+    echo.connect(fb); fb.connect(echo); echo.connect(wet); wet.connect(bus);
+    const noise=(dur)=>{ const n=Math.floor(A.sampleRate*dur), b=A.createBuffer(1,n,A.sampleRate), d=b.getChannelData(0);
+      for(let i=0;i<n;i++) d[i]=Math.random()*2-1; return b; };
     // sấm
-    const len=Math.floor(A.sampleRate*1.6), buf=A.createBuffer(1,len,A.sampleRate), d=buf.getChannelData(0);
-    for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,1.6);
-    const n=A.createBufferSource(), lp=A.createBiquadFilter(), ng=A.createGain();
-    n.buffer=buf; lp.type='lowpass'; lp.frequency.value=140; ng.gain.value=0.7;
-    n.connect(lp); lp.connect(ng); ng.connect(master); n.start(t0);
-    // giọng: méo tiếng cho khàn → lọc giữ dải giọng → to nhỏ → tiếng vọng
-    const shaper=A.createWaveShaper(), curve=new Float32Array(1024);
-    for(let i=0;i<1024;i++){ const x=i/511.5-1; curve[i]=Math.tanh(3*x); }
-    shaper.curve=curve;
-    const formant=A.createBiquadFilter(); formant.type='peaking'; formant.frequency.value=1300; formant.Q.value=1.4; formant.gain.value=9;
-    const hp=A.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=180;
-    const out=A.createGain(); out.gain.value=0.6;
-    const echo=A.createDelay(1), fb=A.createGain(), wet=A.createGain();
-    echo.delayTime.value=0.23; fb.gain.value=0.32; wet.gain.value=0.35;
-    shaper.connect(formant); formant.connect(hp); hp.connect(out); out.connect(master);
-    out.connect(echo); echo.connect(fb); fb.connect(echo); echo.connect(wet); wet.connect(master);
-    const lfo=A.createOscillator(), lg=A.createGain();       // rung giọng
-    lfo.frequency.value=24; lg.gain.value=35; lfo.connect(lg); lfo.start(t0); lfo.stop(t0+2.6);
-    const syll=(t, f0, f1, dur, vol, type)=>{
-      const o=A.createOscillator(), g=A.createGain();
-      o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f1,t+dur);
-      lg.connect(o.frequency);
-      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-      o.connect(g); g.connect(shaper); o.start(t); o.stop(t+dur+0.02);
+    const th=A.createBufferSource(), tl=A.createBiquadFilter(), tg=A.createGain();
+    th.buffer=noise(1.4); tl.type='lowpass'; tl.frequency.value=120;
+    tg.gain.setValueAtTime(0.0001,t0); tg.gain.exponentialRampToValueAtTime(0.9,t0+0.05); tg.gain.exponentialRampToValueAtTime(0.0001,t0+1.4);
+    th.connect(tl); tl.connect(tg); tg.connect(bus); th.start(t0);
+    // một tiếng cười
+    const syll=(t, f0, f1, dur, vol, vw, vib)=>{
+      const env=A.createGain(); env.gain.setValueAtTime(0,t);
+      env.gain.linearRampToValueAtTime(vol,t+0.025); env.gain.setValueAtTime(vol,t+dur*0.55); env.gain.linearRampToValueAtTime(0,t+dur);
+      env.connect(bus); env.connect(echo);
+      const mix=A.createGain(); mix.connect(env);
+      const F=VOWEL[vw].map((fq,j)=>{ const bp=A.createBiquadFilter(), g=A.createGain();
+        bp.type='bandpass'; bp.frequency.value=fq; bp.Q.value=[5,9,12][j]; g.gain.value=[1.6,1.0,0.45][j];
+        bp.connect(g); g.connect(mix); return bp; });
+      const o=A.createOscillator(); o.type='sawtooth';
+      o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+      if(vib){ const l=A.createOscillator(), lg=A.createGain(); l.frequency.value=vib; lg.gain.value=f0*0.04; l.connect(lg); lg.connect(o.frequency); l.start(t); l.stop(t+dur); }
+      F.forEach(bp=>o.connect(bp)); o.start(t); o.stop(t+dur+0.02);
+      const h=A.createBufferSource(), hp=A.createBiquadFilter(), hg=A.createGain();    // hơi "h" ở đầu tiếng
+      h.buffer=noise(0.06); hp.type='highpass'; hp.frequency.value=1400;
+      hg.gain.setValueAtTime(vol*0.5,t-0.03); hg.gain.linearRampToValueAtTime(0,t+0.03);
+      h.connect(hp); hp.connect(hg); hg.connect(bus); h.start(Math.max(t0,t-0.03));
     };
-    [0, 0.3, 0.6].forEach((dt,k)=>syll(t0+0.25+dt, 240-k*15, 170-k*10, 0.22, 0.9, 'sawtooth'));      // hừ… hừ… hừ…
-    for(let k=0;k<9;k++){                                                                             // há há há… cao dần
-      const t=t0+1.15+k*0.13, f=620+k*70;
-      syll(t, f, f*0.78, 0.11, 0.8+k*0.02, k%2 ? 'square' : 'sawtooth');
-    }
-    syll(t0+2.35, 1300, 700, 0.32, 0.9, 'sawtooth');                                                 // HÁÁÁ kéo dài
+    [0, 0.32, 0.64].forEach((dt,k)=>syll(t0+0.3+dt, 190-k*12, 150-k*10, 0.24, 0.55, 'u', 0));     // hừ… hừ… hừ…
+    for(let k=0;k<8;k++){ const f=560+k*45; syll(t0+1.25+k*0.14, f, f*0.86, 0.12, 0.5, 'i', 0); } // hí hí hí… cao dần
+    syll(t0+2.42, 720, 430, 0.5, 0.55, 'a', 6.5);                                                // háaa
   }catch(e){}
 }
 
@@ -121,7 +134,7 @@ function sceneHTML(hero){
 }
 
 function castle(){
-  trackScreen('castle');
+  trackScreen('castle'); preloadWitchLaugh();
   stopAll(); FX.stop && FX.stop();
   document.documentElement.style.setProperty('--c','#9B6BFF');
   const hero=avatar(user||'').e, rescues=castleCount('rescues'), owned=GIFTS.filter(giftCount).length;
@@ -176,7 +189,7 @@ function play(hero){
     over:()=>opened>=RESCUE_N,
     head:()=>`<span id="chead">${headInner()}</span><div class="qbar"><i style="width:${opened/RESCUE_N*100}%"></i></div><span id="cwrong" title="Số lần bị khoá lại">❌ ${wrong}</span>`,
     doneLabel:'🗝️ Mở cửa tháp →',
-    wrongSfx:villainLaugh,
+    wrongSfx:witchLaugh,
     feedDelay:ok=>ok?0:WRONG_WAIT,
     explain:(q,ok)=>ok?'':`<div class="why rally">💪 Phù thủy vừa khoá lại 1 ổ! Trả lời đúng câu tiếp theo để giải cứu công chúa nào!</div>`,
     answer:(ok)=>{
