@@ -1,5 +1,5 @@
 /* ================== TRÒ CHƠI: GIẢI CỨU CÔNG CHÚA TÍ HON ==================
-   Phù thủy Gian Gian nhốt Công chúa Tí Hon trên tháp bằng RESCUE_N ổ khoá.
+   Bà phù thủy Gian Gian nhốt Công chúa Tí Hon trên tháp bằng RESCUE_N ổ khoá.
    - Mỗi câu trả lời đúng: mở 1 ổ khoá, hiệp sĩ (con vật của bé) tiến lại gần tháp.
    - Mỗi câu sai: phù thủy bay tới khoá lại 1 ổ (không xuống dưới 0).
    - Mở hết ổ khoá: công chúa được thả, vua cha tặng quà. Không sai câu nào thì được 2 món quà.
@@ -37,7 +37,72 @@ const PRINCESS_SAY = {
   near:['Sắp được rồi! 🤩','Chỉ còn một chút nữa thôi!'],
   bad:['Ôi không! 😭','Đừng lo, thử lại nhé!','Hiệp sĩ cố lên! 🥺'],
 };
-const VILLAIN_SAY = ['Hí hí! Khoá lại! 🔒','Ha ha! Không dễ đâu!','Hí hí! Ta khoá thêm!'];
+const VILLAIN_SAY = ['Hí hí hí! Công chúa là của ta!','Ha ha ha! Ta khoá lại rồi! 🔒','Hí hí! Không ai cứu được đâu!','Ha ha! Sai rồi nhé!'];
+// Bà phù thủy Gian Gian: da xanh, mũi dài khoằm có mụn cóc, mắt vàng đồng tử đỏ, mũ chóp gập, cưỡi chổi (SVG vẽ tay)
+const WITCH_SVG = `<svg class="witch" viewBox="0 0 150 130" aria-hidden="true">
+  <path d="M108 103 L140 94 L144 126 L108 118 Z" fill="#C9A15B"/>
+  <path d="M112 104 L141 99 M112 110 L143 108 M112 116 L143 118" stroke="#9C7838" stroke-width="2"/>
+  <line x1="6" y1="106" x2="112" y2="111" stroke="#7A4A22" stroke-width="6" stroke-linecap="round"/>
+  <path d="M52 84 L104 84 L122 122 L36 122 Z" fill="#5B2A86"/>
+  <path d="M52 84 L104 84 L96 96 L60 96 Z" fill="#3E1A60"/>
+  <path d="M54 42 Q46 70 50 92 L60 80 Z M102 42 Q110 70 106 92 L96 80 Z" fill="#2B1A3A"/>
+  <path d="M58 52 Q58 34 78 34 Q100 34 100 52 Q100 78 80 94 Q62 82 58 52 Z" fill="#7BC46A"/>
+  <path d="M66 56 Q44 58 22 76 Q36 76 64 70 Z" fill="#6AB25A"/>
+  <circle cx="38" cy="69" r="3" fill="#3F7A33"/>
+  <path d="M63 46 L76 52 M95 46 L82 52" stroke="#1E1230" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="71" cy="57" rx="5.5" ry="4.5" fill="#FFE45C"/><ellipse cx="88" cy="57" rx="5.5" ry="4.5" fill="#FFE45C"/>
+  <ellipse cx="72" cy="57.5" rx="1.6" ry="3.6" fill="#C0141C"/><ellipse cx="89" cy="57.5" rx="1.6" ry="3.6" fill="#C0141C"/>
+  <path d="M66 75 Q79 87 94 73 Q80 81 66 75 Z" fill="#2A0E1E"/>
+  <path d="M79 79 L82 79 L81 84 Z" fill="#FFF7D6"/>
+  <ellipse cx="78" cy="40" rx="38" ry="7" fill="#1B1325"/>
+  <path d="M60 40 Q74 -4 116 6 Q96 12 97 40 Z" fill="#1B1325"/>
+  <path d="M61 33 L97 33 L97 39 L60 39 Z" fill="#8A3FC4"/>
+  <rect x="74" y="32" width="8" height="8" fill="#FFD24D"/>
+</svg>`;
+const WRONG_WAIT = 2600;   // trả lời sai: chờ phù thủy bay tới, cười xong rồi mới hiện thông báo (mili-giây)
+
+// Tiếng cười nham hiểm của bà phù thủy, tổng hợp bằng Web Audio (không cần file âm thanh):
+// sấm rền → 3 tiếng "hừ… hừ…" trầm, chậm → tràng "há há há" the thé cao dần, giọng khàn (méo tiếng) và có tiếng vọng.
+function villainLaugh(){
+  try{
+    const A=ac(), t0=A.currentTime;
+    const master=A.createDynamicsCompressor();                 // giới hạn âm lượng: to nhưng không vỡ tiếng
+    master.threshold.value=-12; master.knee.value=6; master.ratio.value=12; master.attack.value=0.003; master.release.value=0.2;
+    const vol=A.createGain(); vol.gain.value=0.95; master.connect(vol); vol.connect(A.destination);
+    // sấm
+    const len=Math.floor(A.sampleRate*1.6), buf=A.createBuffer(1,len,A.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,1.6);
+    const n=A.createBufferSource(), lp=A.createBiquadFilter(), ng=A.createGain();
+    n.buffer=buf; lp.type='lowpass'; lp.frequency.value=140; ng.gain.value=0.7;
+    n.connect(lp); lp.connect(ng); ng.connect(master); n.start(t0);
+    // giọng: méo tiếng cho khàn → lọc giữ dải giọng → to nhỏ → tiếng vọng
+    const shaper=A.createWaveShaper(), curve=new Float32Array(1024);
+    for(let i=0;i<1024;i++){ const x=i/511.5-1; curve[i]=Math.tanh(3*x); }
+    shaper.curve=curve;
+    const formant=A.createBiquadFilter(); formant.type='peaking'; formant.frequency.value=1300; formant.Q.value=1.4; formant.gain.value=9;
+    const hp=A.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=180;
+    const out=A.createGain(); out.gain.value=0.6;
+    const echo=A.createDelay(1), fb=A.createGain(), wet=A.createGain();
+    echo.delayTime.value=0.23; fb.gain.value=0.32; wet.gain.value=0.35;
+    shaper.connect(formant); formant.connect(hp); hp.connect(out); out.connect(master);
+    out.connect(echo); echo.connect(fb); fb.connect(echo); echo.connect(wet); wet.connect(master);
+    const lfo=A.createOscillator(), lg=A.createGain();       // rung giọng
+    lfo.frequency.value=24; lg.gain.value=35; lfo.connect(lg); lfo.start(t0); lfo.stop(t0+2.6);
+    const syll=(t, f0, f1, dur, vol, type)=>{
+      const o=A.createOscillator(), g=A.createGain();
+      o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+      lg.connect(o.frequency);
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+      o.connect(g); g.connect(shaper); o.start(t); o.stop(t+dur+0.02);
+    };
+    [0, 0.3, 0.6].forEach((dt,k)=>syll(t0+0.25+dt, 240-k*15, 170-k*10, 0.22, 0.9, 'sawtooth'));      // hừ… hừ… hừ…
+    for(let k=0;k<9;k++){                                                                             // há há há… cao dần
+      const t=t0+1.15+k*0.13, f=620+k*70;
+      syll(t, f, f*0.78, 0.11, 0.8+k*0.02, k%2 ? 'square' : 'sawtooth');
+    }
+    syll(t0+2.35, 1300, 700, 0.32, 0.9, 'sawtooth');                                                 // HÁÁÁ kéo dài
+  }catch(e){}
+}
 
 function sceneHTML(hero){
   return `<div class="castle" id="scene" aria-hidden="true">
@@ -49,7 +114,7 @@ function sceneHTML(hero){
       <div class="door"></div>
     </div>
     <div class="psay" id="psay">${pickOne(PRINCESS_SAY.start)}</div>
-    <div class="villain" id="vil">🧙‍♂️<span class="vb" id="vb"></span></div>
+    <div class="villain" id="vil">${WITCH_SVG}<span class="vb" id="vb"></span></div>
     <div class="king" id="king">🤴</div>
     <div class="hero" id="hero" style="--p:0">${hero}<small>🗡️</small></div>
   </div>`;
@@ -67,7 +132,7 @@ function castle(){
   <div class="panel" id="panel">
     <div class="testintro">
       <h3>Công chúa Tí Hon bị nhốt rồi!</h3>
-      <p class="hint">Phù thủy Gian Gian đã nhốt Công chúa Tí Hon trên tháp cao bằng <b>${RESCUE_N} ổ khoá</b>.
+      <p class="hint">Bà phù thủy Gian Gian đã nhốt Công chúa Tí Hon trên tháp cao bằng <b>${RESCUE_N} ổ khoá</b>.
         Mỗi câu con trả lời <b>đúng</b> sẽ mở được 1 ổ khoá. Nhưng cẩn thận: trả lời <b>sai</b> thì phù thủy sẽ bay tới khoá lại 1 ổ!
         Mở hết ${RESCUE_N} ổ khoá để cứu công chúa, <b>vua cha</b> sẽ có quà thưởng cho con 🎁</p>
       <div><span class="pill">🔑 Mở ${RESCUE_N} ổ khoá</span><span class="pill">📚 Từ vựng của mọi bài</span><span class="pill">🎁 Không sai câu nào: 2 món quà</span></div>
@@ -103,6 +168,7 @@ function play(hero){
     const v=$('#vil'), b=$('#bars'); if(!v) return;
     $('#vb').textContent=pickOne(VILLAIN_SAY);
     v.classList.remove('swoop'); void v.offsetWidth; v.classList.add('swoop');
+    const sc=$('#scene'); if(sc){ sc.classList.remove('dark'); void sc.offsetWidth; sc.classList.add('dark'); setTimeout(()=>sc.classList.remove('dark'), WRONG_WAIT); }
     sfx('whoosh');
     clearTimeout(vilT); vilT=setTimeout(()=>{ if(b){ b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); } draw(); }, 550);
   };
@@ -110,6 +176,9 @@ function play(hero){
     over:()=>opened>=RESCUE_N,
     head:()=>`<span id="chead">${headInner()}</span><div class="qbar"><i style="width:${opened/RESCUE_N*100}%"></i></div><span id="cwrong" title="Số lần bị khoá lại">❌ ${wrong}</span>`,
     doneLabel:'🗝️ Mở cửa tháp →',
+    wrongSfx:villainLaugh,
+    feedDelay:ok=>ok?0:WRONG_WAIT,
+    explain:(q,ok)=>ok?'':`<div class="why rally">💪 Phù thủy vừa khoá lại 1 ổ! Trả lời đúng câu tiếp theo để giải cứu công chúa nào!</div>`,
     answer:(ok)=>{
       answered++;
       if(ok){ opened++; draw(); say(pickOne(opened>=RESCUE_N-2?PRINCESS_SAY.near:PRINCESS_SAY.ok));
