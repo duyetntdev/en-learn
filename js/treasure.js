@@ -66,8 +66,9 @@ function treasure(){
           <div class="itxt"><b>${v.place}</b><span>${v.title}</span>
             <em>${done?'💎 Đã nhận đá quý · chơi lại':i===cur?'▶ Lên đảo':'Qua đảo trước để mở'}</em></div></li>`; }).join('')}
       <li class="isle chestrow ${d===VIRTUES.length?'cur':'off'}"><div class="inode"><span class="iemo">🧰</span></div>
-        <div class="itxt"><b>Kho báu</b><span>Rương báu đức tính</span><em>Qua đủ ${VIRTUES.length} đảo để mở</em></div></li>
+        <div class="itxt"><b>Kho báu</b><span>Rương báu đức tính</span><em>Qua đủ ${VIRTUES.length} đảo để mở · có giấy khen mang tên con</em></div></li>
     </ol>
+    ${rewardHTML(j)}
   </div>`;
   $('#back').onclick=home;
   document.querySelectorAll('.inode[data-i]').forEach(b=>b.onclick=()=>{
@@ -76,6 +77,30 @@ function treasure(){
     playIsle(i);
   });
   window.scrollTo(0,0);
+}
+
+/* ---------- Phần thưởng cuối hành trình (hiện trên bản đồ, cho bé biết mình đang cố gắng vì điều gì) ---------- */
+function rewardHTML(j){
+  const left=VIRTUES.filter(v=>!isleDone(v.id, j)).length, name=esc(user||'');
+  return `<div class="treward">
+    <div class="trw-txt">
+      <h3>🧰 Phần thưởng cuối hành trình</h3>
+      <ul>
+        <li><span>🎉</span><div>Mở <b>rương kho báu</b>: ${VIRTUES.length} viên đá quý con sưu tầm bay lên, có pháo hoa và nhạc chúc mừng.</div></li>
+        <li><span>📜</span><div>Nhận <b>Giấy khen "Nhà thám hiểm đức tính"</b> mang tên <b>${name}</b>.</div></li>
+        <li><span>💎</span><div>Trên giấy khen có <b>${VIRTUES.length} lời hứa</b> của con (bấm vào là nghe đọc), số <b>hạt kiên trì</b> con đã nhận và ngày hoàn thành.</div></li>
+        <li><span>📸</span><div>Bố mẹ chụp màn hình giấy khen để khen con, gửi ông bà hoặc in ra dán ở góc học tập nhé!</div></li>
+      </ul>
+      <p class="trw-left">${left ? `Còn <b>${left}</b> đảo nữa là con mở được kho báu!` : 'Con đã qua đủ các đảo, mở kho báu thôi!'}</p>
+    </div>
+    <div class="cert mini" aria-label="Giấy khen xem trước">
+      <div class="ctitle">Giấy khen</div>
+      <div class="cname">Nhà thám hiểm đức tính</div>
+      <div class="cwho">${name}</div>
+      <div class="cgems">${VIRTUES.map(v=>`<span class="${isleDone(v.id, j)?'':'no'}" title="${esc(v.place)}">${v.icon}</span>`).join('')}</div>
+      ${left?`<div class="clock">🔒 Còn ${left} đảo</div>`:''}
+    </div>
+  </div>`;
 }
 
 /* ---------- Trên đảo ---------- */
@@ -127,6 +152,7 @@ function isleWon(i, wrong, seeds){
       <div class="pvi">${esc(v.pledge[1])}</div>
       <p class="hint small">Con hãy đọc to lời hứa này cùng bố mẹ nhé!</p>
     </div>
+    ${all ? '' : `<p class="hint">🧰 Còn <b>${VIRTUES.length - islesDone()}</b> đảo nữa là con mở được kho báu và nhận <b>giấy khen mang tên ${esc(user||'con')}</b>!</p>`}
     <div class="row"><button class="btn ghost" id="map">🗺️ Về bản đồ</button>${
       all ? '<button class="btn" id="open">🧰 Mở kho báu →</button>'
       : !last && first ? `<button class="btn" id="next">⛵ Đảo tiếp theo →</button>` : ''}</div>
