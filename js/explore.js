@@ -196,6 +196,7 @@ function diploma(){
     </div>
     <p class="hint">📸 Bố mẹ chụp màn hình bằng này để khen con nhé!</p>
     <div class="row"><button class="btn ghost" id="h">🏠 Trang chủ</button><button class="btn" id="xm">🧭 Thám hiểm tiếp</button></div>
+    ${shareHTML(false)}
   </div>`;
   $('#back').onclick=explore; $('#xm').onclick=explore; $('#h').onclick=home;
   setTimeout(()=>{ fanfare(); FX.celebrate({power:5, emojis:['🎓','🏅','🧭',...EXPEDITIONS.map(e=>e.icon)]}); }, 500);

@@ -229,6 +229,7 @@ function rescued(hero, right, answered, wrong){
     <div class="kingbox"><div class="kface">🤴</div><div class="bubble">Cảm ơn hiệp sĩ <b>${esc(user||'')}</b> đã cứu con gái ta! Ta thưởng cho con ${gifts.length>1?'<b>2 món quà</b> vì không trả lời sai câu nào':'món quà này'}:</div></div>
     <div class="prize">${gifts.map(g=>`<button class="gbox" data-g="${esc(g[1])}" data-n="${esc(g[2])}"><span class="e">🎁</span><span class="n">Bấm để mở quà</span></button>`).join('')}</div>
     <div class="row"><button class="btn ghost" id="h">🏠 Trang chủ</button><button class="btn ghost" id="tr">🎁 Kho báu</button><button class="btn" id="again">⚔️ Chơi lại</button></div>
+    ${shareHTML(false)}
   </div>`;
   setTimeout(()=>{ fanfare(); FX.celebrate({power:st+1, emojis:['👸','🤴','👑','💖',...gifts.map(g=>g[1])]}); }, 600);
   P.querySelectorAll('.gbox').forEach(b=>b.onclick=()=>{

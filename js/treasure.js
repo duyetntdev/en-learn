@@ -186,6 +186,7 @@ function openChest(){
       <div class="cfoot">🌱 ${tCount('seeds')} hạt kiên trì · 🏆 Kho báu thứ ${tCount('chests')} · ${today}</div>
     </div>
     <div class="row"><button class="btn ghost" id="h">🏠 Trang chủ</button><button class="btn" id="again">🗺️ Bắt đầu hành trình mới</button></div>
+    ${shareHTML(false)}
   </div>`;
   $('#back').onclick=treasure; $('#again').onclick=treasure; $('#h').onclick=home;
   setTimeout(()=>{ fanfare(); FX.celebrate({power:5, emojis:['💎','👑','🌱',...VIRTUES.map(v=>v.icon)]}); }, 900);

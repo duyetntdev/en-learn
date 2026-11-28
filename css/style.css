@@ -490,5 +490,19 @@ button:focus-visible{outline:3px solid var(--c);outline-offset:3px}
 .xcert .xbadges b{font-size:13px}
 .xcert .xbadges small{font-size:12px;letter-spacing:1px}
 @media (max-width:560px){.xscene{height:130px}.xhero{font-size:34px}.pseq{font-size:36px}.xcert .xbadges{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* ================== Chia sẻ ================== */
+.sharebox{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px;padding:12px 16px;border-radius:18px;
+  background:linear-gradient(120deg,#FFF0F6,#EEF4FF);border:2px dashed #F48FB1;text-align:left}
+.sharebox.big{margin-top:24px;padding:16px 20px;border-style:solid;box-shadow:var(--shadow)}
+.sharebox .sic{font-size:32px;line-height:1}
+.sharebox.big .sic{font-size:40px;animation:bob 2.6s ease-in-out infinite}
+.sharebox>div{flex:1;min-width:200px}
+.sharebox b{font-family:'Baloo 2';font-size:18px;line-height:1.3;color:var(--ink);display:block}
+.sharebox.big b{font-size:21px}
+.sharebox small{display:block;color:var(--muted);font-weight:700;font-size:14px}
+.sharebox .sharebtn{--c:#E8457C}
+.sharesheet{max-width:440px}
+.sharesheet .shbtns{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.sharesheet textarea{width:100%;margin-top:12px;border:2px solid var(--line);border-radius:12px;padding:8px 10px;font:inherit;font-size:13px;color:var(--muted);resize:none}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (prefers-reduced-motion:reduce){.chest .gems span{opacity:1;transform:translateY(-26px)}.chest .lid{transform:rotate(-28deg) translate(-8px,-14px)}}

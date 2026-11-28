@@ -66,7 +66,7 @@ ADMIN_EVENTS = ADMIN_INGEST.rsplit('/', 1)[0] + '/events' if ADMIN_INGEST else '
 #   l = số thứ tự bài (0..), lv = cấp, x = mã đảo (trò kho báu), t = thời điểm (unix, giây)
 TRACK_EVENTS = {'view', 'start', 'done'}
 TRACK_AREAS = {'home', 'fame', 'lesson.vocab', 'lesson.dialog', 'lesson.grammar', 'lesson.practice', 'lesson.test',
-               'castle', 'treasure', 'island', 'chest', 'practice', 'test', 'explore', 'expedition', 'diploma'}
+               'castle', 'treasure', 'island', 'chest', 'practice', 'test', 'explore', 'expedition', 'diploma', 'share'}
 TRACK_MAX = 60
 ID_RE = re.compile(r'^[a-z]{1,20}$')
 

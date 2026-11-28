@@ -256,6 +256,51 @@ function logout(){
   };
 }
 
+/* ================== CHIA SẺ ==================
+   Nút "📤 Chia sẻ" ở trang chủ và lúc bé vừa làm được việc lớn (qua bài, cứu công chúa, mở kho báu, nhận bằng).
+   Điện thoại: mở bảng chia sẻ của máy (Zalo, Messenger, Facebook...). Máy tính: bảng chọn Facebook / sao chép link.
+   Ảnh và mô tả khi dán link lấy từ thẻ og: trong index.html (ảnh images/og-share.png). */
+const SHARE_URL = 'https://en.duyetnt.com/';
+const SHARE_TITLE = 'Bé Vui Học Tiếng Anh – học tiếng Anh miễn phí cho bé';
+const SHARE_TEXT = 'Học tiếng Anh miễn phí cho bé: từ vựng có hình, hội thoại, giọng đọc chuẩn và 3 trò chơi Giải cứu công chúa, Đi tìm kho báu, Nhà thám hiểm thiên tài. Hãy chia sẻ để các bạn khác có thể học miễn phí nhé!';
+const shareHTML = big => `<div class="sharebox ${big?'big':''}"><span class="sic">💌</span>
+  <div><b>Hãy chia sẻ để các bạn khác có thể học miễn phí nhé!</b>${big?'<small>Gửi cho bố mẹ các bạn cùng lớp, nhóm Zalo phụ huynh hoặc đăng lên Facebook.</small>':''}</div>
+  <button class="btn sharebtn" type="button" data-share>📤 Chia sẻ</button></div>`;
+async function shareApp(){
+  if(navigator.share){
+    try{ await navigator.share({title:SHARE_TITLE, text:SHARE_TEXT, url:SHARE_URL}); track('done','share',{x:'native'}); toast('💖 Cảm ơn con đã chia sẻ!'); return; }
+    catch(e){ if(e && e.name==='AbortError') return; }      // bé tự đóng bảng chia sẻ
+  }
+  shareSheet();
+}
+function shareSheet(){
+  const m=document.createElement('div'); m.className='modal';
+  m.innerHTML=`<div class="box sharesheet" role="dialog" aria-modal="true" aria-labelledby="shh">
+    <div style="font-size:46px">💌</div><h3 id="shh">Chia sẻ Bé Vui Học Tiếng Anh</h3>
+    <p class="hint">Hãy chia sẻ để các bạn khác có thể học miễn phí nhé!</p>
+    <div class="shbtns">
+      <button class="btn" id="shfb" style="--c:#1877F2">📘 Chia sẻ lên Facebook</button>
+      <button class="btn" id="shcp" style="--c:#0068FF">📋 Sao chép link để gửi Zalo, Messenger</button>
+    </div>
+    <textarea id="shtx" readonly rows="3">${esc(SHARE_TEXT)}\n${SHARE_URL}</textarea>
+    <div class="row" style="margin-top:6px"><button class="btn ghost" id="shno">Đóng</button></div></div>`;
+  document.body.appendChild(m);
+  const close=()=>m.remove();
+  m.onclick=e=>{ if(e.target===m) close(); };
+  m.querySelector('#shno').onclick=close;
+  m.querySelector('#shfb').onclick=()=>{
+    track('done','share',{x:'facebook'});
+    window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(SHARE_URL), '_blank', 'noopener,width=640,height=560');
+    close();
+  };
+  m.querySelector('#shcp').onclick=()=>{
+    const tx=m.querySelector('#shtx'), done=()=>{ track('done','share',{x:'copy'}); toast('📋 Đã sao chép! Dán vào Zalo hoặc Messenger để gửi nhé'); close(); };
+    try{ navigator.clipboard.writeText(tx.value).then(done, ()=>{ tx.select(); toast('Bấm giữ hoặc Ctrl+C để sao chép nhé'); }); }
+    catch(e){ tx.select(); toast('Bấm giữ hoặc Ctrl+C để sao chép nhé'); }
+  };
+}
+document.addEventListener('click', e=>{ if(e.target.closest && e.target.closest('[data-share]')) shareApp(); });
+
 /* ================== HỖ TRỢ ================== */
 const SUPPORT_ZALO = '0985 626 134', SUPPORT_ZALO_URL = 'https://zalo.me/0985626134';
 const supportHTML = () => `<div class="support">
@@ -539,6 +584,7 @@ function home(){
   <div class="grid">${LESSONS.slice(0, CORE_N).map((L,i)=>lessonCard(L,i,cur)).join('')}</div>
   ${packSections(cur)}
   ${!allPassed() && nextPack() ? packOffer() : ''}
+  ${shareHTML(true)}
   <div class="foot"><span>${syncBadge()} · Học trên máy khác: nhập tên <b>${esc(user||'')}</b>. Bật loa để nghe phát âm 🔊</span><button class="link" id="reset">Xoá tiến độ</button></div>
   ${supportHTML()}`;
   homeWire();
@@ -900,7 +946,8 @@ function testResult(i,lvl,sc,n){
     <p class="hint">${ok?unlockMsg+packMsg:'Ôn lại từ vựng và ngữ pháp rồi thử lại nhé (lần sau có câu hỏi mới). Con làm được mà! 💪'}</p>
     <div class="row">${ok
       ? `<button class="btn ghost" id="r1">🏠 Trang chủ</button>${hasNext?`<button class="btn" id="r3">🆕 Học Level ${lvl+1} →</button>`:''}${last||!unlocked(i+1)?'':`<button class="btn ${hasNext?'ghost':''}" id="r2">Lesson ${i+2} →</button>`}`
-      : `<button class="btn ghost" id="r1">📚 Ôn lại bài</button><button class="btn" id="r2">🔁 Làm lại</button>`}</div></div>`;
+      : `<button class="btn ghost" id="r1">📚 Ôn lại bài</button><button class="btn" id="r2">🔁 Làm lại</button>`}</div>
+    ${ok?shareHTML(false):''}</div>`;
   if(ok){ $('#r1').onclick=home;
     const r2=$('#r2'); if(r2) r2.onclick=()=>lesson(i+1,'vocab',startLevel(i+1));
     const r3=$('#r3'); if(r3) r3.onclick=()=>lesson(i,'vocab',lvl+1); }
