@@ -141,9 +141,18 @@ function login(prefill){
   document.documentElement.style.setProperty('--c','#FF8A5B');
   const legacy = !user && Object.keys(progress).length>0;  // tiến độ cũ trước khi có tính năng tên
   $('#app').innerHTML=`
+  <div class="lsky" aria-hidden="true">
+    <span class="cl c1">☁️</span><span class="cl c2">☁️</span><span class="cl c3">☁️</span>
+    ${['A','B','C','⭐','🎈','✨','a','b','📚','💬','🌟','Z','🔤','🎈','⭐','c'].map((x,k)=>`<span class="fl" style="left:${(k*6.3+3)%96}%;animation-delay:${-(k*1.7)%14}s;animation-duration:${11+(k%5)*2}s;--h:${(k*47)%360}">${x}</span>`).join('')}
+  </div>
   <div class="login">
-    <div class="owl big">🦉</div>
+    <div class="lbadges"><span class="lb free">🎁 Hoàn toàn miễn phí</span><span class="lb noads">🚫 Không quảng cáo</span></div>
+    <div class="shero" aria-hidden="true"><span class="cape"></span><span class="sowl">🦉</span><span class="bolt b1">⚡</span><span class="bolt b2">⚡</span><span class="shield">ABC</span></div>
     <h1>Bé Vui Học <span>Tiếng Anh</span></h1>
+    <div class="slogan">Con sẽ trở thành <b>Siêu nhân Tiếng Anh</b>! 🦸</div>
+    <ul class="powers" aria-label="Siêu năng lực con sẽ có">
+      <li><span>👂</span>Siêu tai nghe</li><li><span>🗣️</span>Siêu nói hay</li><li><span>🧠</span>Siêu trí nhớ</li><li><span>🎮</span>3 trò chơi vui</li>
+    </ul>
     <p class="hint">Nhập tên và mã PIN của con để lưu quá trình học. Sang máy khác, chỉ cần nhập đúng tên và mã PIN là học tiếp được!</p>
     <form id="lf" autocomplete="off" novalidate>
       <label for="nm">Tên của con</label>
@@ -192,7 +201,7 @@ function login(prefill){
         <div class="nmhelp" id="ph"></div>
         <div class="row"><button type="button" class="btn ghost" id="back">← Đổi tên</button><button class="btn" id="pgo">${label}</button></div>
       </form>
-      <p class="hint small">${mode==='enter'?`Quên mã PIN? Bố mẹ nhắn Zalo <a href="${SUPPORT_ZALO_URL}" target="_blank" rel="noopener">${SUPPORT_ZALO}</a> để được đặt lại.`:'💡 Bố mẹ ghi nhớ mã PIN giúp con nhé.'}</p></div>`;
+      <p class="hint small">${mode==='enter'?`Bố mẹ nhắn Zalo <a href="${SUPPORT_ZALO_URL}" target="_blank" rel="noopener">${SUPPORT_ZALO}</a> để nhận được sự giúp đỡ.`:'💡 Bố mẹ ghi nhớ mã PIN giúp con nhé.'}</p></div>`;
     const pin=$('#pin'), pin2=$('#pin2'), ph=$('#ph'), go=$('#pgo');
     [pin,pin2].filter(Boolean).forEach(x=>x.oninput=()=>{ x.value=x.value.replace(/\D/g,'').slice(0,4); ph.textContent=''; ph.classList.remove('bad'); });
     $('#sp').onchange=e=>[pin,pin2].filter(Boolean).forEach(x=>x.type=e.target.checked?'text':'password');
