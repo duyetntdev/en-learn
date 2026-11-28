@@ -595,7 +595,7 @@ function home(){
   ${!allPassed() && nextPack() ? packOffer() : ''}
   ${shareHTML(true)}
   <div class="foot"><span>${syncBadge()} · Học trên máy khác: nhập tên <b>${esc(user||'')}</b>. Bật loa để nghe phát âm 🔊</span><button class="link" id="reset">Xoá tiến độ</button></div>
-  ${supportHTML()}`;
+`;
   homeWire();
 }
 function lessonCard(L,i,cur){
@@ -962,6 +962,9 @@ function testResult(i,lvl,sc,n){
     const r3=$('#r3'); if(r3) r3.onclick=()=>lesson(i,'vocab',lvl+1); }
   else { $('#r1').onclick=()=>lesson(i,'vocab',lvl); $('#r2').onclick=()=>{ track('start','test',{l:lkey(i),lv:lvl}); runQuiz(P, makeTest(lv(i,lvl),key), (s,m)=>testResult(i,lvl,s,m), 'Kiểm tra'); }; }
 }
+
+// Khung "Cần hỗ trợ?" cố định dưới mọi màn hình: nằm ngoài #app nên không bị vẽ lại khi đổi màn hình
+(()=>{ const d=document.createElement('div'); d.className='wrap supportwrap'; d.innerHTML=supportHTML(); $('#app').after(d); })();
 
 // Chưa có tên thì bắt buộc nhập tên trước khi học
 if(user && NAME_RE.test(user) && token){ home(); refreshFromServer().finally(loadPacks); }

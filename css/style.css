@@ -43,6 +43,8 @@ button:focus-visible{outline:3px solid var(--c);outline-offset:3px}
 .foot{margin-top:34px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:14px;font-weight:700}
 .support{margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:12px 16px;font-size:15px;font-weight:700;color:var(--muted)}
 .support .sic{font-size:28px}
+.supportwrap{position:relative;z-index:1;padding-top:0;margin-top:-44px}
+.supportwrap .support{margin-top:0}
 .support>div{flex:1;min-width:200px}
 .support b{color:var(--ink)}
 .support a{color:#0068FF;font-weight:800;white-space:nowrap}
